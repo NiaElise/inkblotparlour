@@ -1,7 +1,4 @@
-node_modules
+node_modules/
 .env
-dist
-server.log
-*.local
-.vscode
-.DS_Store
+dist/
+*.log
