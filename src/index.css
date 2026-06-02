@@ -1,0 +1,212 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+@layer base {
+  body {
+    @apply font-body text-parchment;
+    background-color: #0c090a;
+    background-image: 
+      radial-gradient(ellipse at 20% 50%, rgba(139, 111, 71, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(139, 42, 42, 0.03) 0%, transparent 50%);
+  }
+
+  h1, h2, h3, h4, h5 {
+    @apply font-serif;
+  }
+
+  ::selection {
+    @apply bg-sepia/40 text-parchment-light;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ink-warm/80 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-sepia/40;
+  }
+}
+
+@layer components {
+  .glass-parchment {
+    @apply bg-inkwell/70 border border-parchment/10 backdrop-blur-sm;
+  }
+
+  .card-paper {
+    @apply relative overflow-hidden bg-ink-light/60 border border-parchment/10 
+           shadow-[0_2px_20px_-4px_rgba(0,0,0,0.5)];
+  }
+
+  .card-paper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.04;
+    background-image: url('/assets/paper-texture.webp');
+    background-size: cover;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+
+  .ink-divider {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-parchment/20 to-transparent;
+  }
+
+  .ink-text {
+    @apply text-parchment/80;
+  }
+
+  .text-ornament {
+    @apply text-parchment/30 font-serif italic text-xs tracking-widest;
+  }
+
+  .btn-ink {
+    @apply px-6 py-3 rounded-sm text-sm font-medium tracking-wider uppercase
+           bg-ink-warm border border-parchment/20 text-parchment
+           hover:bg-sepia/30 hover:border-sepia/40 transition-all duration-300
+           shadow-[inset_0_1px_0_rgba(255,255,255,0.05)];
+  }
+
+  .btn-blood {
+    @apply px-6 py-3 rounded-sm text-sm font-medium tracking-wider uppercase
+           bg-blood/30 border border-blood/40 text-parchment-light
+           hover:bg-blood/50 hover:border-blood/60 transition-all duration-300;
+  }
+
+  .input-inkwell {
+    @apply bg-ink-light/80 border border-parchment/15 rounded-sm px-5 py-3.5 
+           text-parchment text-sm placeholder:text-parchment/30
+           focus:outline-none focus:border-sepia/50 focus:ring-1 focus:ring-sepia/20
+           transition-all duration-300;
+  }
+
+  .vignette-card {
+    @apply relative overflow-hidden rounded-sm border border-parchment/10
+           bg-gradient-to-b from-ink-light/90 to-ink/95 p-5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .vignette-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, transparent 60%, rgba(12, 9, 10, 0.6) 100%);
+    pointer-events: none;
+  }
+
+  .desk-tab {
+    @apply px-4 py-2 text-xs tracking-wider uppercase text-parchment/40
+           border-b-2 border-transparent hover:text-parchment/70 hover:border-sepia/30
+           transition-all duration-200 cursor-pointer;
+  }
+
+  .desk-tab.active {
+    @apply text-parchment border-sepia/50;
+  }
+
+  .lore-badge {
+    @apply text-[10px] px-2 py-0.5 rounded-sm uppercase tracking-wider
+           border border-parchment/15 bg-ink-warm/50 text-parchment/60;
+  }
+
+  .tension-bar {
+    @apply h-1.5 rounded-full bg-ink-warm/80 overflow-hidden;
+  }
+
+  .tension-fill {
+    @apply h-full rounded-full bg-gradient-to-r from-sepia/60 via-sepia to-blood/60 transition-all duration-700;
+  }
+
+  .handwritten {
+    font-family: 'Crimson Pro', serif;
+    font-style: italic;
+    @apply tracking-tight;
+  }
+
+  .post-feed-scroll {
+    @apply space-y-4 max-h-[600px] overflow-y-auto pr-2;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 111, 71, 0.3) transparent;
+  }
+
+  /* Old paper effect */
+  .old-paper {
+    @apply relative;
+    background: linear-gradient(135deg, rgba(28, 20, 18, 0.95), rgba(12, 9, 10, 0.98));
+  }
+
+  .old-paper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('/assets/paper-texture.webp');
+    background-size: cover;
+    background-blend-mode: overlay;
+    opacity: 0.06;
+    pointer-events: none;
+  }
+
+  /* Typewriter cursor blink */
+  .cursor-blink::after {
+    content: '|';
+    @apply text-sepia/60 ml-0.5;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* Ink bleed decorative */
+  .ink-bleed-decoration {
+    @apply absolute w-32 h-32 opacity-[0.03] pointer-events-none;
+    background: radial-gradient(circle, rgba(139, 111, 71, 0.5) 0%, transparent 70%);
+    filter: blur(15px);
+  }
+
+  /* Secret society seal */
+  .society-seal {
+    @apply w-14 h-14 rounded-full border border-parchment/20 
+           flex items-center justify-center text-lg
+           bg-gradient-to-br from-ink-warm to-ink-light;
+    box-shadow: 0 0 15px rgba(139, 111, 71, 0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  /* Ask bubble */
+  .ask-bubble {
+    @apply relative rounded-sm p-4 border border-parchment/10
+           bg-gradient-to-br from-inkwell to-ink/80;
+  }
+
+  .ask-bubble::before {
+    content: '';
+    @apply absolute -left-1.5 top-4 w-3 h-3 bg-inkwell border-l border-t border-parchment/10;
+    transform: rotate(-45deg);
+  }
+
+  /* Journal entry */
+  .journal-entry {
+    @apply border-l-2 border-sepia/30 pl-5 py-3 relative;
+  }
+
+  .journal-entry::before {
+    content: '✦';
+    @apply absolute -left-2.5 text-sepia/50 text-xs;
+  }
+}
+
+@layer utilities {
+  .scroll-fade {
+    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  }
+}

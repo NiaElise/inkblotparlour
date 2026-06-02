@@ -1,0 +1,48 @@
+import { motion } from 'framer-motion';
+
+const navLinks = [
+  { label: 'The Parlour', href: '#feed' },
+  { label: 'Circles', href: '#circles' },
+  { label: 'Method', href: '#features' },
+  { label: 'Access', href: '#pricing' },
+];
+
+export default function Navbar() {
+  return (
+    <nav className="fixed top-0 w-full z-50 border-b border-parchment/8 bg-[#0c090a]/90 backdrop-blur-md">
+      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <a href="#" className="flex items-center gap-3 group">
+          <span className="w-2 h-2 rounded-full bg-sepia/60 group-hover:bg-sepia transition-colors" />
+          <span className="text-lg font-serif tracking-tight text-parchment-light">
+            Inkblot<span className="text-sepia/60 italic font-normal"> Parlour</span>
+          </span>
+        </a>
+
+        <div className="hidden md:flex items-center gap-10">
+          {navLinks.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              className="text-xs uppercase tracking-[0.2em] text-parchment/40 hover:text-parchment/80 transition-colors duration-300"
+            >
+              {link.label}
+            </a>
+          ))}
+          <button className="group relative px-6 py-2.5 text-xs uppercase tracking-[0.15em]">
+            <span className="absolute inset-0 border border-parchment/15 rounded-sm group-hover:border-sepia/40 transition-colors" />
+            <span className="absolute inset-0 bg-gradient-to-r from-sepia/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-sm" />
+            <span className="relative text-parchment/80 group-hover:text-parchment transition-colors">
+              Join the Circle
+            </span>
+          </button>
+        </div>
+
+        <button className="md:hidden text-parchment/60 hover:text-parchment">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M3 5h14M3 10h14M3 15h10" />
+          </svg>
+        </button>
+      </div>
+    </nav>
+  );
+}
