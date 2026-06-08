@@ -69,6 +69,8 @@ export interface Post {
   id: string;
   user_id: string;
   storyworld_id?: string;
+  lore_id?: string;
+  character_id?: string;
   content: string;
   created_at: string;
 }
@@ -102,5 +104,12 @@ export interface WriterCircle {
 export interface CircleMember {
   circle_id: string;
   user_id: string;
+  joined_at: string;
+}
+
+export interface StoryworldMember {
+  storyworld_id: string;
+  user_id: string;
+  role: string;
   joined_at: string;
 }
