@@ -1,29 +1,14 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { fetchCircles, joinCircle } from '../api';
 
-// --- Data ---
 
-const circles = [
-  {
-    id: 'lamp-lit-covenant',
-    name: 'The Lamp-Lit Covenant',
-    tagline: 'For those who write best after midnight.',
-    description: 'A quiet circle for night-owl writers. Share fragments, beta reads, and the particular loneliness of crafting fiction when the rest of the world sleeps. Candles optional. Words mandatory.',
-    seal: '🕯',
-    members: 38,
-    online: 7,
-    tier: 'Architect',
-    tags: ['late-night', 'beta-reads', 'atmospheric'],
-    founders: ['E. Thorne', 'M. Harrow'],
-    mood: 'Dim amber glow, smoke and ink.',
-    rules: ['No critique without invitation', 'Share at least one fragment per moon', 'Keep the lamp lit'],
-    created: 'Winter 2024',
-  },
-  {
-    id: 'the-archivists',
+  const FEATURED_CIRCLES = [
+    {
+      id: 'the-archivists',
     name: 'The Archivists',
     tagline: 'Keepers of the forgotten lore.',
-    description: 'A lore-deepening circle where members share worldbuilding bibles, create collaborative mythologies, and preserve each other\'s continuity across sagas. We are the memory of the Parlour.',
+    description: `A lore-deepening circle where members share worldbuilding bibles, create collaborative mythologies, and preserve each other's continuity across sagas. We are the memory of the Parlour.`,
     seal: '⌇',
     members: 27,
     online: 4,
@@ -622,6 +607,36 @@ function MembershipCard({ circle, status }) {
 // --- Main Component ---
 
 export default function WriterCircles() {
+  const [circles, setCircles] = useState(FEATURED_CIRCLES);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchCircles().then(data => {
+      const mapped = data.map(c => ({
+        ...c,
+        tagline: c.tagline || 'A new sanctuary for writers.',
+        seal: c.seal || '◈',
+        members: Math.floor(Math.random() * 50) + 1,
+        online: Math.floor(Math.random() * 10),
+        tier: c.tier || 'Architect',
+        tags: c.tags || ['community'],
+        founders: c.founders || ['The Architect'],
+        mood: c.mood || 'New ink on fresh paper.',
+        rules: c.rules || ['Be kind', 'Write often'],
+        created: c.created || 'Today'
+      }));
+      // Filter out mocks if they are already in the data (by ID)
+      const existingIds = new Set(mapped.map(c => c.id));
+      const uniqueMocks = FEATURED_CIRCLES.filter(c => !existingIds.has(c.id));
+      setCircles([...uniqueMocks, ...mapped]);
+      setLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setLoading(false);
+    });
+  }, []);
+
   const [view, setView] = useState('browse'); // browse | detail | create | my-circles
   const [selectedCircle, setSelectedCircle] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);

@@ -49,34 +49,17 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Connect */}
+          {/* Social */}
           <div>
             <h4 className="text-[9px] uppercase tracking-[0.2em] text-parchment/30 mb-4">Connect</h4>
             <ul className="space-y-2">
-              {['Manifesto', 'Twitter', 'Discord'].map((item) => (
+              {['Manifesto', 'Twitter', 'Discord', 'Privacy'].map((item) => (
                 <li key={item}>
                   <a href="#" className="text-xs text-parchment/40 hover:text-parchment/70 transition-colors">
                     {item}
                   </a>
                 </li>
               ))}
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <h4 className="text-[9px] uppercase tracking-[0.2em] text-parchment/30 mb-4">Legal</h4>
-            <ul className="space-y-2">
-              <li>
-                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-xs text-parchment/40 hover:text-parchment/70 transition-colors">
-                  Privacy Pact
-                </a>
-              </li>
-              <li>
-                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-xs text-parchment/40 hover:text-parchment/70 transition-colors">
-                  Terms of Service
-                </a>
-              </li>
             </ul>
           </div>
         </div>

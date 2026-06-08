@@ -1,56 +1,37 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
-
-const feedPosts = [
-  {
-    id: 1,
-    author: 'E. Thorne',
-    handle: '@eliaswrites',
-    tier: 'Architect',
-    time: '2h ago',
-    content: 'The city remembers what the map forgot. Every street in the Forgotten Quarter bends at angles that don\'t exist in geometry. The Weaver left them that way — breadcrumbs for those who know how to read cobblestone.',
-    tags: ['#worldbuilding', '#forgottencity', '#lore'],
-    likes: 24,
-    asks: 7,
-  },
-  {
-    id: 2,
-    author: 'Clara V.',
-    handle: '@claravale',
-    tier: 'Collective',
-    time: '5h ago',
-    content: 'Writing a character who keeps secrets from the reader is easy. Writing one who keeps secrets from herself — that\'s the craft.',
-    tags: ['#craft', '#characters'],
-    likes: 42,
-    asks: 13,
-  },
-  {
-    id: 3,
-    author: 'The Weaver',
-    handle: '@weaverthreads',
-    tier: 'Architect',
-    time: '8h ago',
-    content: 'Fragment from Act II: "He didn\'t notice the threads pulling tighter with every choice. That\'s the tragedy — we never see our own strings."',
-    tags: ['#wip', '#darkfantasy', '#fragment'],
-    likes: 18,
-    asks: 4,
-  },
-  {
-    id: 4,
-    author: 'M. Harrow',
-    handle: '@mharrow',
-    tier: 'Draftsman',
-    time: '12h ago',
-    content: 'Finally cracked the POV structure for Book 3. Three timelines. One truth. A secret that only the reader can assemble. This is why I love this craft.',
-    tags: ['#writingprocess', '#pov', '#book3'],
-    likes: 31,
-    asks: 9,
-  },
-];
+import { useState, useEffect } from 'react';
+import { fetchFeed } from '../api';
 
 export default function SocialFeed() {
   const [activeTab, setActiveTab] = useState('feed');
   const [expandedPost, setExpandedPost] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (activeTab === 'feed') {
+      setLoading(true);
+      fetchFeed().then(data => {
+        // Map backend Post to frontend feedPost structure
+        const mappedPosts = data.map(p => ({
+          id: p.id,
+          author: p.user_id === 'user_dev_1' ? 'The Architect' : 'Unknown Writer',
+          handle: p.user_id === 'user_dev_1' ? '@architect' : '@writer',
+          tier: 'Collective', // In a real app, fetch user tier
+          time: new Date(p.created_at).toLocaleTimeString(),
+          content: p.content,
+          tags: ['#worldbuilding'], // Backend doesn't store tags yet in posts table, or we can parse them from content
+          likes: 0,
+          asks: 0
+        }));
+        setPosts(mappedPosts);
+        setLoading(false);
+      }).catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+    }
+  }, [activeTab]);
 
   return (
     <section id="feed" className="relative py-24 px-6">
@@ -110,9 +91,14 @@ export default function SocialFeed() {
             {/* Feed Content */}
             {activeTab === 'feed' && (
               <div className="post-feed-scroll scroll-fade">
-                {feedPosts.map((post, i) => (
-                  <motion.div
-                    key={post.id}
+                {loading ? (
+                  <div className="text-center py-12 text-parchment/30 animate-pulse">Retrieving fragments from the void...</div>
+                ) : posts.length === 0 ? (
+                  <div className="text-center py-12 text-parchment/30 italic">The feed is silent. Write the first fragment.</div>
+                ) : (
+                  posts.map((post, i) => (
+                    <motion.div
+                      key={post.id}
                     initial={{ opacity: 0, y: 15 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1, duration: 0.4 }}
@@ -192,7 +178,7 @@ export default function SocialFeed() {
                       )}
                     </div>
                   </motion.div>
-                ))}
+                )))}
               </div>
             )}
 
@@ -203,22 +189,22 @@ export default function SocialFeed() {
                   {
                     from: '@inkweaver',
                     to: 'Elias Thorne',
-                    question: 'How do you keep the tension alive when your protagonist and antagonist haven\'t met yet?',
-                    answer: 'Absence creates its own tension. The Weaver\'s influence is felt in every corrupted street, every broken law. The reader fears the meeting more than the conflict itself.',
+                    question: `How do you keep the tension alive when your protagonist and antagonist haven't met yet?`,
+                    answer: `Absence creates its own tension. The Weaver's influence is felt in every corrupted street, every broken law. The reader fears the meeting more than the conflict itself.`,
                     time: '3h ago',
                   },
                   {
                     from: '@novicebuilder',
                     to: 'Clara Vale',
                     question: 'Tips for building a magic system that feels organic?',
-                    answer: 'Start with the cost, not the power. Every spell should take something the caster isn\'t willing to lose.',
+                    answer: `Start with the cost, not the power. Every spell should take something the caster isn't willing to lose.`,
                     time: '7h ago',
                   },
                   {
                     from: '@lorekeeper',
                     to: 'The Weaver',
                     question: 'The Forgotten City has three suns in your worldbuilding doc but two in Ch 4 — intentional?',
-                    answer: 'The third sun set permanently when the Bloodline Pact was broken. It\'s a subtle continuity marker for those paying attention.',
+                    answer: `The third sun set permanently when the Bloodline Pact was broken. It's a subtle continuity marker for those paying attention.`,
                     time: '1d ago',
                   },
                 ].map((ask, i) => (
@@ -286,7 +272,7 @@ export default function SocialFeed() {
                     tags: ['process', 'plotting'],
                   },
                   {
-                    title: 'Clara\'s Field Notes: On Naming the Unnameable',
+                    title: `Clara's Field Notes: On Naming the Unnameable`,
                     author: 'Clara Vale',
                     excerpt: 'Names are the first magic. Before there was fire or flight, there was the act of naming. To name a thing is to claim it. To rename it is to remake it. In the Forgotten City, the old names still echo through the empty streets...',
                     date: 'Journal Entry · 8 Mar 2025',
@@ -381,7 +367,7 @@ export default function SocialFeed() {
               <div className="space-y-4">
                 {[
                   { pair: 'Elias vs. The Weaver', value: 92 },
-                  { pair: 'Clara\'s Betrayal Arc', value: 45 },
+                  { pair: `Clara's Betrayal Arc`, value: 45 },
                   { pair: 'Forgotten King Rising', value: 76 },
                   { pair: 'Bloodline Pact', value: 31 },
                 ].map((item, i) => (

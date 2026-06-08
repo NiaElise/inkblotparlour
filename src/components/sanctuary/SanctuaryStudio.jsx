@@ -31,7 +31,7 @@ const worldData = {
       { event: 'Clara Reveals Truth', chapter: 'Ch 14', era: 'Present Day', type: 'upcoming' },
     ],
     secretWeb: [
-      { secret: 'The Weaver is Elias\'s father', knownBy: ['The Weaver', 'Clara Vale'], revealed: false },
+      { secret: `The Weaver is Elias's father`, knownBy: ['The Weaver', 'Clara Vale'], revealed: false },
       { secret: 'The Forgotten City is a prison', knownBy: ['The Weaver'], revealed: false },
       { secret: 'Clara betrayed Elias at the Bloodline Pact', knownBy: ['Clara Vale', 'The Weaver'], revealed: false },
       { secret: 'The third sun can be reignited', knownBy: ['The Forgotten King'], revealed: false },
@@ -176,7 +176,7 @@ function OverviewTab({ world, worldId }) {
           <div className="space-y-3">
             {[
               { text: 'The ink remembers what the author forgets. Every word leaves a residue, a ghost of intention that lingers between the lines...', chapter: 'Ch 13', date: '2h ago' },
-              { text: 'He didn\'t notice the threads pulling tighter with every choice. That\'s the tragedy — we never see our own strings.', chapter: 'Ch 12', date: '1d ago' },
+              { text: `He didn't notice the threads pulling tighter with every choice. That's the tragedy — we never see our own strings.`, chapter: 'Ch 12', date: '1d ago' },
             ].map((frag, i) => (
               <div key={i} className="border-l-2 border-sepia/20 pl-3 py-1">
                 <p className="text-xs text-parchment/50 italic leading-relaxed">&ldquo;{frag.text}&rdquo;</p>
@@ -366,7 +366,7 @@ function LedgerTab() {
         { category: 'Religion', entries: [{ key: 'Primary Faith', value: 'The Void' }, { key: 'Heresy', value: 'The Light-Bearers' }] },
         { category: 'Geography', entries: [{ key: 'Capital', value: 'The Forgotten City' }, { key: 'Continent', value: 'Aethra' }] },
         { category: 'Magic System', entries: [{ key: 'Source', value: 'Ancestral Blood' }, { key: 'Limitation', value: 'One gift per lifetime' }] },
-        { category: 'Languages', entries: [{ key: 'Common', value: 'Old Aethran' }, { key: 'Secret', value: 'The Weaver\'s Cant' }] },
+        { category: 'Languages', entries: [{ key: 'Common', value: 'Old Aethran' }, { key: 'Secret', value: `The Weaver's Cant` }] },
         { category: 'History', entries: [{ key: 'Founding Era', value: 'Age of Accord' }, { key: 'Current Era', value: 'Age of Shadows' }] },
       ].map((section) => (
         <div key={section.category} className="card-paper rounded-sm p-4">
