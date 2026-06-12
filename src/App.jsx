@@ -17,6 +17,8 @@ import SanctuaryStudio from './components/sanctuary/SanctuaryStudio';
 import SanctuaryCabinet from './components/sanctuary/SanctuaryCabinet';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfService from './components/legal/TermsOfService';
+import LoginPage from './components/LoginPage';
+import AdminDashboard from './components/AdminDashboard';
 
 function LandingPage() {
   return (
@@ -42,6 +44,8 @@ export default function App() {
     <div className="min-h-screen selection:bg-sepia/30 selection:text-parchment-light">
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/sanctuary" element={<SanctuaryLayout />}>

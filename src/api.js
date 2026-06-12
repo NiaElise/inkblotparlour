@@ -228,3 +228,32 @@ export const updateTimeline = async (id, title, events) => {
   if (res.status === 403) throw new Error('Architect/Collective tier required');
   return res.json();
 };
+
+// --- Admin & Auth ---
+export const login = async (email, password) => {
+  const res = await fetch(`${API_BASE}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || 'Login failed');
+  }
+  return res.json();
+};
+
+export const fetchAdminUsers = async () => {
+  const res = await fetch(`${API_BASE}/admin/users`);
+  return res.json();
+};
+
+export const fetchAdminStoryworlds = async () => {
+  const res = await fetch(`${API_BASE}/admin/storyworlds`);
+  return res.json();
+};
+
+export const fetchAdminPosts = async () => {
+  const res = await fetch(`${API_BASE}/admin/posts`);
+  return res.json();
+};

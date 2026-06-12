@@ -5,6 +5,7 @@ const navLinks = [
   { label: 'Circles', href: '#circles' },
   { label: 'Method', href: '#features' },
   { label: 'Access', href: '#pricing' },
+  { label: 'Login', href: '/login' },
 ];
 
 export default function Navbar() {
