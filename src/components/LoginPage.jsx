@@ -12,6 +12,7 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       const user = await login(email, password);
+      // login function already sets localStorage.setItem('inkblot_token', user.id);
       if (user.role === "admin") {
         navigate("/admin");
       } else {

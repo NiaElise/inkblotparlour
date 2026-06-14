@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 import { clsx } from 'clsx';
+import { Link } from 'react-router-dom';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -141,14 +142,16 @@ export default function Pricing() {
               </ul>
 
               {/* CTA */}
-              <button className={cn(
-                "w-full py-3 rounded-sm text-xs font-medium uppercase tracking-widest transition-all duration-300",
+              <Link 
+                to={`/signup?tier=${plan.name.split(' ').pop()}`}
+                className={cn(
+                "w-full py-3 rounded-sm text-xs font-medium uppercase tracking-widest transition-all duration-300 text-center",
                 plan.popular
                   ? "bg-gradient-to-r from-sepia/80 to-sepia/60 text-parchment-light hover:from-sepia hover:to-sepia/80 shadow-lg shadow-sepia/10"
                   : "border border-parchment/15 text-parchment/60 hover:bg-ink-warm/60 hover:border-parchment/30"
               )}>
                 {plan.price === 'Free' ? 'Begin Your Draft' : 'Reserve Your Station'}
-              </button>
+              </Link>
 
               <p className="text-[9px] text-center text-parchment/20 mt-3">
                 {plan.price === 'Free' ? 'No card needed. Join the circle.' : 'Limited beta spots available.'}

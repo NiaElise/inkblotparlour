@@ -3,6 +3,9 @@ export type UserTier = 'Draftsman' | 'Architect' | 'Collective';
 export interface User {
   id: string;
   username: string;
+  email?: string;
+  password?: string;
+  role: 'admin' | 'user';
   tier: UserTier;
   customization?: string; // JSON string for aesthetic customization
   created_at: string;

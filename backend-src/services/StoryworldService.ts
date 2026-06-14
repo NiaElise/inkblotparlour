@@ -4,12 +4,20 @@ import { UserService } from './UserService';
 
 export class StoryworldService {
   static getStoryworlds(userId: string): Storyworld[] {
+    const user = UserService.getUser(userId);
+    if (user?.role === 'admin') {
+      return DB.query(`SELECT * FROM storyworlds`);
+    }
     // Return storyworlds owned by user OR where they are a member
     return DB.query(`
       SELECT DISTINCT s.* FROM storyworlds s
       LEFT JOIN storyworld_members sm ON s.id = sm.storyworld_id
       WHERE s.user_id = '${userId}' OR sm.user_id = '${userId}'
     `);
+  }
+
+  static getAllStoryworlds(): Storyworld[] {
+    return DB.query(`SELECT * FROM storyworlds`);
   }
 
   static getStoryworld(id: string): Storyworld | undefined {
@@ -20,11 +28,12 @@ export class StoryworldService {
   static createStoryworld(userId: string, id: string, title: string, description?: string): void {
     const user = UserService.getUser(userId);
     if (!user) throw new Error('User not found');
-
-    const worlds = this.getStoryworlds(userId);
-
-    if (user.tier === 'Draftsman' && worlds.length >= 1) {
-      throw new Error('Draftsman tier is limited to 1 storyworld. Upgrade to Architect for unlimited storyworlds.');
+    
+    if (user.role !== 'admin') {
+      const worlds = this.getStoryworlds(userId);
+      if (user.tier === 'Draftsman' && worlds.length >= 1) {
+        throw new Error('Draftsman tier is limited to 1 storyworld. Upgrade to Architect for unlimited storyworlds.');
+      }
     }
 
     DB.execute(`INSERT INTO storyworlds (id, user_id, title, description) VALUES ('${id}', '${userId}', '${title}', '${description || ''}')`);
@@ -37,16 +46,16 @@ export class StoryworldService {
   static addMember(ownerId: string, storyworldId: string, memberId: string, role: string = 'member'): void {
     const user = UserService.getUser(ownerId);
     if (!user) throw new Error('User not found');
-
-    if (user.tier !== 'Collective') {
+    
+    if (user.tier !== 'Collective' && user.role !== 'admin') {
       throw new Error('Collaborative worldbuilding is only available for Collective tier.');
     }
-
+    
     const storyworld = this.getStoryworld(storyworldId);
-    if (!storyworld || storyworld.user_id !== ownerId) {
+    if (user.role !== 'admin' && (!storyworld || storyworld.user_id !== ownerId)) {
       throw new Error('Only the storyworld owner can add members.');
     }
-
+    
     DB.execute(`INSERT INTO storyworld_members (storyworld_id, user_id, role) VALUES ('${storyworldId}', '${memberId}', '${role}')`);
   }
 
