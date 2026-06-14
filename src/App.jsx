@@ -6,6 +6,7 @@ import MethodPage from './pages/MethodPage';
 import TiersPage from './pages/TiersPage';
 import FeedPage from './pages/FeedPage';
 import SignupPage from './pages/SignupPage';
+import SettingsPage from './pages/SettingsPage';
 import LoginPage from './components/LoginPage';
 import AdminDashboard from './components/AdminDashboard';
 import SanctuaryLayout from './components/sanctuary/SanctuaryLayout';
@@ -84,6 +85,7 @@ export default function App() {
           <Route path="studio/:worldId" element={<SanctuaryStudio />} />
           <Route path="cabinet" element={<SanctuaryCabinet />} />
           <Route path="cabinet/:characterId" element={<SanctuaryCabinet />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

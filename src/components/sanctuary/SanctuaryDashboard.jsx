@@ -1,189 +1,169 @@
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-
-const storyworlds = [
-  { id: 'the-forgotten-city', name: 'The Forgotten City', icon: '⌗', status: 'Active', progress: 68, chars: 8, lore: 23, lastEdited: '2h ago', proseCount: 45000 },
-  { id: 'the-bloodline-pact', name: 'The Bloodline Pact', icon: '◉', status: 'Active', progress: 34, chars: 5, lore: 12, lastEdited: '1d ago', proseCount: 21000 },
-  { id: 'echoes-of-ash', name: 'Echoes of Ash', icon: '✦', status: 'Draft', progress: 12, chars: 3, lore: 7, lastEdited: '5d ago', proseCount: 8700 },
-];
-
-const recentAsks = [
-  { from: '@inkweaver', question: 'How do you handle POV transitions in multi-character chapters?', time: '3h ago' },
-  { from: '@novicebuilder', question: 'Your timeline mentions three suns — is the third one visible from the Eastern Reach?', time: '1d ago' },
-  { from: '@lorekeeper', question: 'Can you share your method for tracking secret reveals across acts?', time: '2d ago' },
-];
-
-const recentNotifications = [
-  { type: 'ask', text: 'New ask from @inkweaver', time: '3h ago' },
-  { type: 'circle', text: 'The Lamp-Lit Covenant has a new fragment', time: '5h ago' },
-  { type: 'tension', text: 'Tension spike: Elias vs The Weaver at 92%', time: '8h ago' },
-];
+import { fetchStats, fetchStoryworlds, createStoryworld, fetchAsks } from '../../api';
 
 export default function SanctuaryDashboard() {
   const navigate = useNavigate();
-  const [greeting] = useState(() => {
-    const h = new Date().getHours();
-    if (h < 12) return 'Morning';
-    if (h < 18) return 'Afternoon';
-    return 'Evening';
-  });
+  const [stats, setStats] = useState({ storyworlds: 0, characters: 0, fragments: 0 });
+  const [worlds, setWorlds] = useState([]);
+  const [asks, setAsks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadDashboard() {
+      try {
+        const [s, w, a] = await Promise.all([
+          fetchStats(),
+          fetchStoryworlds(),
+          fetchAsks()
+        ]);
+        setStats(s);
+        setWorlds(w);
+        setAsks(a);
+      } catch (err) {
+        console.error("Dashboard load failed", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadDashboard();
+  }, []);
+
+  const handleCreateWorld = async () => {
+    const title = prompt("Enter Storyworld Title:");
+    if (!title) return;
+    try {
+      const newWorld = await createStoryworld(title, "A new realm of imagination.");
+      setWorlds([...worlds, newWorld]);
+      setStats({ ...stats, storyworlds: stats.storyworlds + 1 });
+    } catch (err) {
+      alert("Failed to create world: " + err.message);
+    }
+  };
+
+  if (loading) return <div className="text-sepia font-serif italic text-center py-20">Opening the gates...</div>;
 
   return (
-    <div className="space-y-8">
-      {/* Welcome */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center gap-3 mb-2">
-          <div className="h-px w-6 bg-sepia/40" />
-          <span className="text-ornament">Good {greeting}, Architect</span>
+    <div className="space-y-10">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-serif text-parchment-light mb-2 italic">Welcome back, Architect</h1>
+          <p className="text-parchment/40 text-sm max-w-xl">
+            The ink is fresh and the margins are waiting. Your narratives continue here.
+          </p>
         </div>
-        <h1 className="text-3xl md:text-4xl font-serif text-parchment-light">
-          Your <span className="italic text-sepia/70">Sanctuary</span>
-        </h1>
-        <p className="text-parchment/40 text-sm mt-2 font-light max-w-xl">
-          Your worlds, your threads, your continuity. Everything you need to build the architecture of fiction.
-        </p>
-      </motion.div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Active Worlds', value: '3', icon: '◈' },
-          { label: 'Total Characters', value: '16', icon: '♟' },
-          { label: 'Lore Entries', value: '42', icon: '⌇' },
-          { label: 'Words Written', value: '74.7K', icon: '✎' },
-        ].map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-            className="card-paper rounded-sm p-4"
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-sepia/50 text-sm">{stat.icon}</span>
-              <span className="text-[9px] uppercase tracking-widest text-parchment/30">{stat.label}</span>
-            </div>
-            <div className="text-2xl font-serif text-parchment/80">{stat.value}</div>
-          </motion.div>
-        ))}
+        
+        <div className="flex gap-8 px-6 py-4 rounded-sm border border-parchment/8 bg-ink-warm/20">
+          <div className="text-center">
+            <div className="text-xl font-serif text-sepia/80 leading-none mb-1">{stats.storyworlds}</div>
+            <div className="text-[9px] uppercase tracking-widest text-parchment/20">Worlds</div>
+          </div>
+          <div className="h-8 w-px bg-parchment/10" />
+          <div className="text-center">
+            <div className="text-xl font-serif text-sepia/80 leading-none mb-1">{stats.characters}</div>
+            <div className="text-[9px] uppercase tracking-widest text-parchment/20">Characters</div>
+          </div>
+          <div className="h-8 w-px bg-parchment/10" />
+          <div className="text-center">
+            <div className="text-xl font-serif text-sepia/80 leading-none mb-1">{stats.fragments}</div>
+            <div className="text-[9px] uppercase tracking-widest text-parchment/20">Fragments</div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Storyworlds */}
-        <div className="md:col-span-2 space-y-4">
-          <h2 className="text-xs uppercase tracking-widest text-parchment/30 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-sepia/40" />
-            Your Storyworlds
-          </h2>
+      <div className="grid lg:grid-cols-3 gap-10">
+        {/* Left column - Storyworlds */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs uppercase tracking-[0.2em] text-parchment/30 font-bold">Active Projects</h2>
+          </div>
 
-          {storyworlds.map((world, i) => (
-            <motion.div
-              key={world.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="card-paper rounded-sm p-4 group hover:border-parchment/15 transition-all cursor-pointer"
-              onClick={() => navigate(`/sanctuary/studio/${world.id}`)}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="society-seal w-10 h-10 text-lg">{world.icon}</div>
-                  <div>
-                    <h3 className="text-sm font-serif text-parchment/80 group-hover:text-parchment transition-colors">
-                      {world.name}
-                    </h3>
-                    <div className="flex items-center gap-3 text-[10px] text-parchment/30 mt-0.5">
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded-sm border ${
-                        world.status === 'Active' ? 'border-emerald-500/30 text-emerald-500/60' : 'border-sepia/30 text-sepia/60'
-                      }`}>
-                        {world.status}
-                      </span>
-                      <span>{world.chars} characters</span>
-                      <span>{world.lore} lore entries</span>
-                      <span>{world.proseCount.toLocaleString()} words</span>
-                    </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {worlds.map((world, i) => (
+              <motion.div
+                key={world.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                onClick={() => navigate(`/sanctuary/studio/${world.id}`)}
+                className="group card-paper rounded-sm p-5 cursor-pointer hover:border-sepia/30 transition-all border border-parchment/8"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-8 h-8 rounded-sm border border-parchment/10 flex items-center justify-center text-sepia/40 bg-ink-warm/20 group-hover:text-sepia/80 transition-colors font-serif italic text-lg">
+                    {world.title.substring(0, 1)}
                   </div>
+                  <span className="text-[9px] text-parchment/20 font-mono">ID: {world.id.substring(0, 8)}</span>
                 </div>
-                <span className="text-[9px] text-parchment/20">{world.lastEdited}</span>
-              </div>
+                
+                <h3 className="text-sm font-serif text-parchment/80 mb-1 group-hover:text-parchment transition-colors">
+                  {world.title}
+                </h3>
+                <p className="text-[10px] text-parchment/40 line-clamp-2 mb-4 font-light leading-relaxed">
+                  {world.description || "No description provided."}
+                </p>
 
-              {/* Progress */}
-              <div className="flex items-center gap-3">
-                <div className="tension-bar flex-1">
-                  <div className="tension-fill" style={{ width: `${world.progress}%` }} />
+                <div className="flex items-center justify-between pt-4 border-t border-parchment/5">
+                   <div className="flex gap-3 text-[9px] text-parchment/30">
+                     <span>Active</span>
+                     <span>Studio Ready</span>
+                   </div>
+                   <span className="text-[10px] text-sepia/40 group-hover:translate-x-1 transition-transform italic">Enter →</span>
                 </div>
-                <span className="text-[10px] text-parchment/30 font-mono">{world.progress}%</span>
-                <button className="text-[9px] text-sepia/40 hover:text-sepia transition-colors opacity-0 group-hover:opacity-100">
-                  Open Studio →
-                </button>
-              </div>
-            </motion.div>
-          ))}
-
-          <button className="w-full py-3 border border-dashed border-parchment/10 rounded-sm text-xs text-parchment/30 hover:text-parchment/60 hover:border-parchment/20 transition-all">
-            + New Storyworld
-          </button>
+              </motion.div>
+            ))}
+            
+            <button 
+              onClick={handleCreateWorld}
+              className="group flex flex-col items-center justify-center gap-3 p-8 border border-dashed border-parchment/10 rounded-sm hover:border-sepia/30 hover:bg-sepia/5 transition-all min-h-[160px]"
+            >
+              <span className="text-2xl text-parchment/10 group-hover:text-sepia/40 transition-colors">+</span>
+              <span className="text-[10px] uppercase tracking-widest text-parchment/20 group-hover:text-sepia/60 transition-colors">Ink New World</span>
+            </button>
+          </div>
         </div>
 
-        {/* Right column */}
-        <div className="space-y-6">
-          {/* Recent Notifications */}
-          <div className="card-paper rounded-sm p-4">
-            <h3 className="text-[10px] uppercase tracking-widest text-parchment/30 mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-sepia/40" />
-              Recent Threads
-            </h3>
-            <div className="space-y-3">
-              {recentNotifications.map((notif, i) => (
-                <div key={i} className="flex items-start gap-2.5 text-xs text-parchment/50 hover:bg-ink-warm/30 rounded-sm p-2 -mx-2 transition-colors cursor-pointer">
-                  <span className={`text-[10px] mt-0.5 ${
-                    notif.type === 'ask' ? 'text-sepia/50' :
-                    notif.type === 'circle' ? 'text-emerald-500/40' : 'text-blood/40'
-                  }`}>
-                    {notif.type === 'ask' ? '?' : notif.type === 'circle' ? '◈' : '⚡'}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate">{notif.text}</p>
-                    <p className="text-[9px] text-parchment/20">{notif.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Recent Asks */}
-          <div className="card-paper rounded-sm p-4">
-            <h3 className="text-[10px] uppercase tracking-widest text-parchment/30 mb-4 flex items-center gap-2">
+        {/* Right column - Inbox & Activity */}
+        <div className="space-y-8">
+          <div className="card-paper rounded-sm p-5 border border-parchment/8">
+            <h2 className="text-[10px] uppercase tracking-widest text-parchment/30 mb-6 flex items-center gap-2 font-bold">
               <span className="w-1.5 h-1.5 rounded-full bg-sepia/40" />
               Pending Asks
-            </h3>
-            <div className="space-y-3">
-              {recentAsks.map((ask, i) => (
-                <div key={i} className="text-xs text-parchment/50 hover:bg-ink-warm/30 rounded-sm p-2 -mx-2 transition-colors cursor-pointer">
-                  <div className="flex items-center gap-1.5 text-[9px] text-parchment/20 mb-1">
-                    <span className="text-parchment/40">{ask.from}</span>
-                    <span>· {ask.time}</span>
+            </h2>
+            
+            <div className="space-y-4">
+              {asks.length > 0 ? asks.filter(a => !a.answer).slice(0, 3).map((ask, i) => (
+                <div key={ask.id} className="text-xs text-parchment/50 hover:bg-ink-warm/30 rounded-sm p-2 -mx-2 transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-1.5 text-[9px] text-parchment/20 mb-1.5">
+                    <span className="text-parchment/40">Fragment Inquiry</span>
+                    <span>· Just now</span>
                   </div>
-                  <p className="truncate text-parchment/60">&ldquo;{ask.question}&rdquo;</p>
+                  <p className="line-clamp-2 text-parchment/60 italic group-hover:text-parchment transition-colors">
+                    &ldquo;{ask.question}&rdquo;
+                  </p>
                 </div>
-              ))}
+              )) : (
+                <div className="py-4 text-center">
+                  <p className="text-[10px] text-parchment/20 italic">No pending inquiries at this time.</p>
+                </div>
+              )}
             </div>
-            <button className="mt-3 text-[9px] uppercase tracking-widest text-sepia/40 hover:text-sepia transition-colors">
-              View All Asks →
+            
+            <button className="mt-6 w-full py-2 text-[9px] uppercase tracking-widest text-sepia/40 border border-sepia/10 hover:bg-sepia/5 hover:text-sepia transition-all">
+              View All Communications
             </button>
           </div>
 
-          {/* Quick Write */}
-          <div className="card-paper rounded-sm p-4">
-            <h3 className="text-[10px] uppercase tracking-widest text-parchment/30 mb-3">Quick Fragment</h3>
-            <textarea
-              placeholder="A line, a thought, a fragment..."
-              className="w-full bg-ink-warm/40 border border-parchment/8 rounded-sm p-3 text-xs text-parchment/60 placeholder:text-parchment/20 resize-none h-20 focus:outline-none focus:border-sepia/30 transition-colors"
-            />
-            <button className="mt-2 text-[9px] uppercase tracking-widest text-sepia/40 hover:text-sepia transition-colors">
-              Save to Journal →
-            </button>
+          <div className="card-paper rounded-sm p-5 border border-parchment/8 bg-blood/5">
+            <h2 className="text-[10px] uppercase tracking-widest text-blood/40 mb-4 flex items-center gap-2 font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-blood/40" />
+              Archives Update
+            </h2>
+            <p className="text-[10px] text-parchment/40 leading-relaxed italic">
+              "Every story is an argument with silence." 
+              Keep writing, architect. The Parlour is listening.
+            </p>
           </div>
         </div>
       </div>

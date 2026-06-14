@@ -263,18 +263,29 @@ export const updateTensionMap = async (id, data) => {
   return res.json();
 };
 
-// Timelines
-export const fetchTimelines = async (storyworldId) => {
-  const res = await authFetch(`${API_BASE}/storyworlds/${storyworldId}/timelines`);
-  if (res.status === 403) throw new Error('Architect/Collective tier required');
+// Stats
+export const fetchStats = async () => {
+  const res = await authFetch(`${API_BASE}/stats`);
+  if (!res.ok) return { storyworlds: 0, characters: 0, fragments: 0 };
   return res.json();
 };
 
-export const updateTimeline = async (id, title, events) => {
-  const res = await authFetch(`${API_BASE}/timelines/${id}`, {
+export const fetchStoryworld = async (id) => {
+  const res = await authFetch(`${API_BASE}/storyworlds/${id}`);
+  return res.json();
+};
+
+export const updateCustomization = async (data) => {
+  const res = await authFetch(`${API_BASE}/me/customization`, {
     method: 'PUT',
-    body: JSON.stringify({ title, events }),
+    body: JSON.stringify(data),
   });
+  return res.json();
+};
+
+
+export const fetchTimelines = async (storyworldId) => {
+  const res = await authFetch(`${API_BASE}/storyworlds/${storyworldId}/timelines`);
   if (res.status === 403) throw new Error('Architect/Collective tier required');
   return res.json();
 };
