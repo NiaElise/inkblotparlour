@@ -14,8 +14,9 @@ const tiers = [
     tagline: 'For those beginning their first great architecture.',
     features: [
       '1 Storyworld',
+      'Limited Character Slots',
+      'Limited Lore Slots',
       'Basic Lore Tracking',
-      'Character Cabinet',
       'Post Feed Access',
       'Drafting Loop (Free tier)',
       'Read Journals',
@@ -24,36 +25,37 @@ const tiers = [
   },
   {
     name: 'The Architect',
-    price: '$15',
+    price: '$10',
     period: '/mo',
-    tagline: 'The professional standard for complex worldbuilding.',
+    tagline: 'For serious fiction architects.',
     popular: true,
     features: [
       'Unlimited Storyworlds',
+      'Unlimited Character & Lore Slots',
       'Tension Mapping',
       'The Secret Web',
       'Timeline Orchestration',
       'Continuity Alerts',
+      'Exclusive Writer Circles',
       'Send & Receive Asks',
-      'Secret Societies Access',
-      'Architect Loop (Paid tier)',
       'Write & Publish Journals',
+      'Architect Loop (Paid tier)',
     ],
     tier: 'architect',
   },
   {
     name: 'The Collective',
-    price: '$30',
+    price: '$15',
     period: '/mo',
-    tagline: 'Collaborative sanctuary for shared universes.',
+    tagline: 'For collaborative worldbuilding studios.',
     features: [
       'Everything in Architect',
-      'Shared Storyworlds',
-      'Writing Room Sync',
-      'Lore Version Control',
-      'Aesthetic Customization',
-      'Custom CSS / Skins',
+      'Collaborative Worldbuilding',
       'Priority Feed Placement',
+      'Aesthetic Customization',
+      'Custom CSS / Profile Skins',
+      'All Writer Circles (Admin Access)',
+      'Create & Manage Circles',
       'Collective Loop (Premium)',
       'Dedicated Support',
     ],
@@ -64,7 +66,7 @@ const tiers = [
 export default function Pricing() {
   return (
     <section id="pricing" className="relative py-24 px-6">
-      <div className="absolute inset-0 bg-gradient-to-b from-ink-well/10 via-transparent to-ink-well/20 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-inkwell/10 via-transparent to-inkwell/20 pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto">
         <motion.div
@@ -83,7 +85,7 @@ export default function Pricing() {
             Choose your <span className="italic text-sepia/70">station</span>
           </h2>
           <p className="text-parchment/40 max-w-lg mx-auto">
-            Each tier unlocks a deeper Social Loop. Your circle reflects your commitment.
+            All tiers share the same social ecosystem. Your tools and circles deepen with your commitment.
           </p>
         </motion.div>
 
@@ -159,9 +161,7 @@ export default function Pricing() {
         <div className="text-center mt-10">
           <div className="old-paper inline-block rounded-sm px-6 py-4 border border-parchment/8">
             <p className="text-xs text-parchment/40 italic">
-              <span className="text-parchment/60 font-medium not-italic">All tiers</span> include access to the Post Feed, 
-              reading Journals, and the core worldbuilding tools. Your Social Loop 
-              determines who you interact with.
+              <span className="text-parchment/60 font-medium not-italic">All tiers</span> share the full social ecosystem — The Feed, Asks, and Journals. The Draftsman tier faces upgrade pressure through <span className="text-parchment/60">feature depth</span> (unlimited worlds, Tension Mapping, Secret Web, Timeline Orchestration) and <span className="text-parchment/60">project limits</span> (1 storyworld, limited character/lore slots).
             </p>
           </div>
         </div>
