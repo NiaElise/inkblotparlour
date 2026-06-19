@@ -54,7 +54,7 @@ const tiers = [
       'Priority Feed Placement',
       'Aesthetic Customization',
       'Custom CSS / Profile Skins',
-      'All Writer Circles (Admin Access)',
+      'Moderate & Manage Circles',
       'Create & Manage Circles',
       'Collective Loop (Premium)',
       'Dedicated Support',

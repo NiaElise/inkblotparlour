@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { fetchFeed } from '../api';
+import { fetchFeed, archivePost, hidePost, flagPost } from '../api';
+import { ModerationActions } from './moderation/ModerationUI';
 
 export default function SocialFeed() {
   const [activeTab, setActiveTab] = useState('feed');
@@ -8,30 +9,66 @@ export default function SocialFeed() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const user = JSON.parse(localStorage.getItem('inkblot_user') || 'null');
+
+  const loadFeed = () => {
+    setLoading(true);
+    fetchFeed().then(data => {
+      // Map backend Post to frontend feedPost structure
+      const mappedPosts = data.map(p => ({
+        id: p.id,
+        user_id: p.user_id,
+        author: p.user_id === 'user_dev_1' ? 'The Architect' : 'Unknown Writer',
+        handle: p.user_id === 'user_dev_1' ? '@architect' : '@writer',
+        tier: 'Collective', // In a real app, fetch user tier
+        time: new Date(p.created_at).toLocaleTimeString(),
+        content: p.content,
+        tags: ['#worldbuilding'], // Backend doesn't store tags yet in posts table, or we can parse them from content
+        likes: 0,
+        asks: 0
+      }));
+      setPosts(mappedPosts);
+      setLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setLoading(false);
+    });
+  };
+
   useEffect(() => {
     if (activeTab === 'feed') {
-      setLoading(true);
-      fetchFeed().then(data => {
-        // Map backend Post to frontend feedPost structure
-        const mappedPosts = data.map(p => ({
-          id: p.id,
-          author: p.user_id === 'user_dev_1' ? 'The Architect' : 'Unknown Writer',
-          handle: p.user_id === 'user_dev_1' ? '@architect' : '@writer',
-          tier: 'Collective', // In a real app, fetch user tier
-          time: new Date(p.created_at).toLocaleTimeString(),
-          content: p.content,
-          tags: ['#worldbuilding'], // Backend doesn't store tags yet in posts table, or we can parse them from content
-          likes: 0,
-          asks: 0
-        }));
-        setPosts(mappedPosts);
-        setLoading(false);
-      }).catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+      loadFeed();
     }
   }, [activeTab]);
+
+  const handleArchive = async (postId) => {
+    try {
+      await archivePost(postId, true);
+      setPosts(posts.filter(p => p.id !== postId));
+    } catch (err) {
+      alert("Failed to archive post");
+    }
+  };
+
+  const handleHide = async (postId) => {
+    try {
+      await hidePost(postId);
+      setPosts(posts.filter(p => p.id !== postId));
+    } catch (err) {
+      alert("Failed to hide post");
+    }
+  };
+
+  const handleFlag = async (postId) => {
+    const reason = prompt("Reason for flagging this post:");
+    if (!reason) return;
+    try {
+      await flagPost(postId, reason);
+      alert("Post flagged for review.");
+    } catch (err) {
+      alert("Failed to flag post");
+    }
+  };
 
   return (
     <section id="feed" className="relative py-24 px-6">
@@ -120,13 +157,14 @@ export default function SocialFeed() {
                           <div className="text-xs text-parchment/30">{post.handle} · {post.time}</div>
                         </div>
                       </div>
-                      <button className="text-parchment/20 hover:text-parchment/50 transition-colors">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-                          <circle cx="7" cy="2" r="1.5" />
-                          <circle cx="7" cy="7" r="1.5" />
-                          <circle cx="7" cy="12" r="1.5" />
-                        </svg>
-                      </button>
+                      <ModerationActions 
+                        postId={post.id} 
+                        onAction={(action) => {
+                          if (action === 'archive') handleArchive(post.id);
+                          if (action === 'hide') handleHide(post.id);
+                          if (action === 'flag') handleFlag(post.id);
+                        }} 
+                      />
                     </div>
 
                     {/* Post Content */}
@@ -189,22 +227,22 @@ export default function SocialFeed() {
                   {
                     from: '@inkweaver',
                     to: 'Elias Thorne',
-                    question: 'How do you keep the tension alive when your protagonist and antagonist haven\'t met yet?',
-                    answer: 'Absence creates its own tension. The Weaver\'s influence is felt in every corrupted street, every broken law. The reader fears the meeting more than the conflict itself.',
+                    question: `How do you keep the tension alive when your protagonist and antagonist haven't met yet?`,
+                    answer: `Absence creates its own tension. The Weaver's influence is felt in every corrupted street, every broken law. The reader fears the meeting more than the conflict itself.`,
                     time: '3h ago',
                   },
                   {
                     from: '@novicebuilder',
                     to: 'Clara Vale',
                     question: 'Tips for building a magic system that feels organic?',
-                    answer: 'Start with the cost, not the power. Every spell should take something the caster isn\'t willing to lose.',
+                    answer: `Start with the cost, not the power. Every spell should take something the caster isn't willing to lose.`,
                     time: '7h ago',
                   },
                   {
                     from: '@lorekeeper',
                     to: 'The Weaver',
                     question: 'The Forgotten City has three suns in your worldbuilding doc but two in Ch 4 — intentional?',
-                    answer: 'The third sun set permanently when the Bloodline Pact was broken. It\'s a subtle continuity marker for those paying attention.',
+                    answer: `The third sun set permanently when the Bloodline Pact was broken. It's a subtle continuity marker for those paying attention.`,
                     time: '1d ago',
                   },
                 ].map((ask, i) => (
@@ -272,7 +310,7 @@ export default function SocialFeed() {
                     tags: ['process', 'plotting'],
                   },
                   {
-                    title: 'Clara\'s Field Notes: On Naming the Unnameable',
+                    title: `Clara's Field Notes: On Naming the Unnameable`,
                     author: 'Clara Vale',
                     excerpt: 'Names are the first magic. Before there was fire or flight, there was the act of naming. To name a thing is to claim it. To rename it is to remake it. In the Forgotten City, the old names still echo through the empty streets...',
                     date: 'Journal Entry · 8 Mar 2025',
@@ -367,7 +405,7 @@ export default function SocialFeed() {
               <div className="space-y-4">
                 {[
                   { pair: 'Elias vs. The Weaver', value: 92 },
-                  { pair: 'Clara\'s Betrayal Arc', value: 45 },
+                  { pair: `Clara's Betrayal Arc`, value: 45 },
                   { pair: 'Forgotten King Rising', value: 76 },
                   { pair: 'Bloodline Pact', value: 31 },
                 ].map((item, i) => (

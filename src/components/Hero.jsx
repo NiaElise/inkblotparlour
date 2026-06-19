@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const writingFragments = [
   '"The ink whispered secrets the author never meant to tell."',
@@ -10,6 +11,12 @@ const writingFragments = [
 
 export default function Hero() {
   const [fragmentIndex, setFragmentIndex] = useState(0);
+  const [email, setEmail] = useState('');
+  const navigate = useNavigate();
+
+  const handleEnter = () => {
+    navigate(`/signup?email=${encodeURIComponent(email)}`);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -71,10 +78,15 @@ export default function Hero() {
                 <input
                   type="email"
                   placeholder="your@inkwell.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="relative w-full sm:w-72 input-inkwell"
                 />
               </div>
-              <button className="btn-blood w-full sm:w-auto flex items-center justify-center gap-2 group">
+              <button 
+                onClick={handleEnter}
+                className="btn-blood w-full sm:w-auto flex items-center justify-center gap-2 group"
+              >
                 Enter the Parlour
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" className="group-hover:translate-x-1 transition-transform">
                   <path d="M1 7h12M7 1l6 6-6 6" />

@@ -1,19 +1,39 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { fetchMe, fetchStoryworlds, logout } from '../../api';
 
 const sidebarLinks = [
-  { to: '/sanctuary', label: 'Sanctuary', icon: '◈', end: true },
-  { to: '/sanctuary/studio/the-forgotten-city', label: 'The Forgotten City', icon: '⌗' },
-  { to: '/sanctuary/studio/the-bloodline-pact', label: 'The Bloodline Pact', icon: '◉' },
-  { to: '/sanctuary/studio/echoes-of-ash', label: 'Echoes of Ash', icon: '✦' },
+  { to: '/sanctuary', label: 'Dashboard', icon: '◈', end: true },
+  { to: '/sanctuary/journal', label: 'Chronicler Journal', icon: '✒' },
 ];
 
 const bottomLinks = [
   { to: '/sanctuary/cabinet', label: 'Character Cabinet', icon: '♟' },
+  { to: '/sanctuary/settings', label: 'Settings', icon: '⚙' },
 ];
 
 export default function SanctuaryLayout() {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [worlds, setWorlds] = useState([]);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const userData = await fetchMe();
+        setUser(userData);
+        const worldsData = await fetchStoryworlds();
+        setWorlds(worldsData);
+      } catch (err) {
+        console.error("Failed to load sanctuary data", err);
+      }
+    }
+    loadData();
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <div className="flex h-screen bg-[#0c090a] overflow-hidden">
@@ -54,6 +74,26 @@ export default function SanctuaryLayout() {
               <span className="truncate">{link.label}</span>
             </NavLink>
           ))}
+
+          <div className="pt-4 pb-2 px-3 text-[10px] uppercase tracking-widest text-parchment/15 font-bold">
+            My Worlds
+          </div>
+          {worlds.map((world) => (
+            <NavLink
+              key={world.id}
+              to={`/sanctuary/studio/${world.id}`}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-sm text-xs transition-all duration-200 ${
+                  isActive
+                    ? 'bg-sepia/10 text-parchment/80 border-l-2 border-sepia/50'
+                    : 'text-parchment/30 hover:text-parchment/60 hover:bg-ink-warm/40 border-l-2 border-transparent'
+                }`
+              }
+            >
+              <span className="text-sm w-5 text-center shrink-0">⬟</span>
+              <span className="truncate">{world.title}</span>
+            </NavLink>
+          ))}
         </nav>
 
         {/* Bottom */}
@@ -74,20 +114,30 @@ export default function SanctuaryLayout() {
               <span>{link.label}</span>
             </NavLink>
           ))}
+          
+          {user?.role === 'admin' && (
+            <NavLink
+              to="/admin"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-xs text-sepia/50 hover:text-sepia transition-all duration-200"
+            >
+              <span className="text-sm w-5 text-center shrink-0">🏛</span>
+              <span>Archives (Admin)</span>
+            </NavLink>
+          )}
         </div>
 
         {/* User */}
         <div className="px-4 py-4 border-t border-parchment/8 flex items-center gap-3">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sepia/30 to-inkwell border border-parchment/10 flex items-center justify-center text-[9px] font-serif text-parchment/60 shrink-0">
-            ET
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sepia/30 to-inkwell border border-parchment/10 flex items-center justify-center text-[9px] font-serif text-parchment/60 shrink-0 uppercase">
+            {user?.username?.substring(0, 2) || '...'}
           </div>
           <div className="min-w-0">
-            <div className="text-[11px] text-parchment/60 truncate">Elias Thorne</div>
-            <div className="text-[8px] text-parchment/20 uppercase tracking-wider">Architect</div>
+            <div className="text-[11px] text-parchment/60 truncate">{user?.username || 'Loading...'}</div>
+            <div className="text-[8px] text-parchment/20 uppercase tracking-wider">{user?.tier || '...'}</div>
           </div>
           <button
-            onClick={() => navigate('/')}
-            className="ml-auto text-parchment/20 hover:text-parchment/50 transition-colors"
+            onClick={handleLogout}
+            className="ml-auto text-parchment/20 hover:text-blood transition-colors"
             title="Exit Sanctuary"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2">

@@ -1,42 +1,31 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { fetchCircles, joinCircle } from '../api';
+import { fetchCircles, joinCircle, fetchMe, fetchWritingRooms, createWritingRoom } from '../api';
 
-export default function WriterCircles() {
-  const [activeCircle, setActiveCircle] = useState(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [circles, setCircles] = useState([]);
-  const [loading, setLoading] = useState(true);
+function WritingRoomCard({ room }) {
+  return (
+    <div 
+      onClick={() => window.location.href = `/sanctuary/studio/${room.storyworld_id}`}
+      className="p-4 bg-ink-well/40 border border-parchment/10 rounded-sm hover:border-sepia/30 transition-colors cursor-pointer group"
+    >
+      <div className="flex justify-between items-start mb-2">
+        <h5 className="text-sm font-serif text-parchment/80 group-hover:text-sepia transition-colors">{room.name}</h5>
+        <span className="text-[8px] uppercase tracking-widest text-parchment/20">Room</span>
+      </div>
+      <p className="text-[11px] text-parchment/40 line-clamp-2 italic leading-relaxed">
+        {room.description || 'A space for collaborative creation...'}
+      </p>
+    </div>
+  );
+}
 
-  useEffect(() => {
-    setLoading(true);
-    fetchCircles().then(data => {
-      // Merge backend data with some default UI fields if missing
-      const mapped = data.map(c => ({
-        ...c,
-        tagline: c.tagline || 'A new sanctuary for writers.',
-        seal: c.seal || '◈',
-        members: 1, // Mock
-        online: 0,
-        tier: 'Architect', // Mock
-        tags: ['community'],
-        founders: ['The Architect'],
-        mood: 'New ink on fresh paper.',
-        rules: ['Be kind', 'Write often'],
-        created: 'Today'
-      }));
-      setCircles(mapped);
-      setLoading(false);
-    }).catch(err => {
-      console.error(err);
-      setLoading(false);
-    });
-  }, []);
+
+const FEATURED_CIRCLES = [
   {
     id: 'the-archivists',
     name: 'The Archivists',
     tagline: 'Keepers of the forgotten lore.',
-    description: 'A lore-deepening circle where members share worldbuilding bibles, create collaborative mythologies, and preserve each other\'s continuity across sagas. We are the memory of the Parlour.',
+    description: `A lore-deepening circle where members share worldbuilding bibles, create collaborative mythologies, and preserve each other's continuity across sagas. We are the memory of the Parlour.`,
     seal: '⌇',
     members: 27,
     online: 4,
@@ -233,6 +222,18 @@ function CircleDetail({ circle, onBack, onJoin, userTier }) {
   const canJoin = userTier === 'Architect' || userTier === 'Collective';
   const isCollectiveOnly = circle.tier === 'Collective';
   const hasAccess = userTier === 'Collective' || (userTier === 'Architect' && !isCollectiveOnly);
+  const [rooms, setRooms] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
+
+  useEffect(() => {
+    if (circle.id) {
+      setLoadingRooms(true);
+      fetchWritingRooms(circle.id)
+        .then(setRooms)
+        .catch(console.error)
+        .finally(() => setLoadingRooms(false));
+    }
+  }, [circle.id]);
 
   // Mock recent activity
   const recentActivity = [
@@ -248,6 +249,7 @@ function CircleDetail({ circle, onBack, onJoin, userTier }) {
       exit={{ opacity: 0, y: -10 }}
       className="card-paper rounded-sm border border-parchment/10 overflow-hidden"
     >
+      {/* ... (rest of the component header) */}
       {/* Detail Header */}
       <div className="relative p-6 md:p-8 border-b border-parchment/8">
         <div className="ink-bleed-decoration top-0 right-0" />
@@ -338,6 +340,50 @@ function CircleDetail({ circle, onBack, onJoin, userTier }) {
           <button className="mt-5 text-[10px] uppercase tracking-widest text-sepia/50 hover:text-sepia transition-colors">
             View full circle feed →
           </button>
+
+          {/* Writing Rooms Section */}
+          <div className="mt-12">
+            <div className="flex items-center justify-between mb-6">
+              <h4 className="text-[10px] uppercase tracking-widest text-parchment/30 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-sepia/40" />
+                Writing Rooms
+              </h4>
+              {userTier === 'Collective' && (
+                <button 
+                  onClick={async () => {
+                    const name = prompt("Enter Writing Room name:");
+                    if (!name) return;
+                    try {
+                      await createWritingRoom(circle.id, name, "");
+                      const updatedRooms = await fetchWritingRooms(circle.id);
+                      setRooms(updatedRooms);
+                    } catch (err) {
+                      alert(err.message);
+                    }
+                  }}
+                  className="text-[9px] uppercase tracking-widest text-sepia/60 hover:text-sepia transition-colors"
+                >
+                  + New Room
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {rooms.map(room => (
+                <WritingRoomCard key={room.id} room={room} />
+              ))}
+              {rooms.length === 0 && !loadingRooms && (
+                <div className="col-span-full py-8 border border-dashed border-parchment/10 text-center">
+                  <p className="text-[10px] text-parchment/20 italic">No writing rooms established in this circle yet.</p>
+                </div>
+              )}
+              {loadingRooms && (
+                <div className="col-span-full py-8 text-center text-parchment/20 italic text-[10px]">
+                  Consulting the archives...
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Right — Sidebar */}
@@ -635,11 +681,43 @@ function MembershipCard({ circle, status }) {
 // --- Main Component ---
 
 export default function WriterCircles() {
+  const [circles, setCircles] = useState(FEATURED_CIRCLES);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    fetchMe().then(setUser).catch(console.error);
+    
+    setLoading(true);
+    fetchCircles().then(data => {
+      const mapped = data.map(c => ({
+        ...c,
+        tagline: c.tagline || 'A new sanctuary for writers.',
+        seal: c.seal || '◈',
+        members: Math.floor(Math.random() * 50) + 1,
+        online: Math.floor(Math.random() * 10),
+        tier: c.tier || 'Architect',
+        tags: c.tags || ['community'],
+        founders: c.founders || ['The Architect'],
+        mood: c.mood || 'New ink on fresh paper.',
+        rules: c.rules || ['Be kind', 'Write often'],
+        created: c.created || 'Today'
+      }));
+      const existingIds = new Set(mapped.map(c => c.id));
+      const uniqueMocks = FEATURED_CIRCLES.filter(c => !existingIds.has(c.id));
+      setCircles([...uniqueMocks, ...mapped]);
+      setLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setLoading(false);
+    });
+  }, []);
+
   const [view, setView] = useState('browse'); // browse | detail | create | my-circles
   const [selectedCircle, setSelectedCircle] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [joinedCircles, setJoinedCircles] = useState([]);
-  const [userTier, setUserTier] = useState('Architect'); // Mock tier
+  const userTier = user?.tier || 'Draftsman';
   const [filterTier, setFilterTier] = useState('all');
 
   const filteredCircles = filterTier === 'all'

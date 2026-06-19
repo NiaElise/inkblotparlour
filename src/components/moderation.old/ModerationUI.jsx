@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
-import { fetchSupportMessages, sendSupportMessage } from '../../api';
+import { useState } from 'react';
 
 // --- Moderation Actions (used on feed posts) ---
 
@@ -136,64 +135,29 @@ const quickQuestions = [
 
 export default function LibrarianChat() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(mockMessages);
   const [input, setInput] = useState('');
   const [showQuick, setShowQuick] = useState(true);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadMessages();
-    }
-  }, [isOpen]);
-
-  const loadMessages = async () => {
-    try {
-      const msgs = await fetchSupportMessages();
-      if (msgs.length === 0) {
-        setMessages(mockMessages);
-      } else {
-        setMessages(msgs.map(m => ({ 
-          from: m.sender, 
-          text: m.message, 
-          time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-        })));
-        setShowQuick(false);
-      }
-    } catch (err) {
-      console.error('Failed to load messages:', err);
-    }
-  };
-
-  const handleSend = async (text) => {
+  const handleSend = (text) => {
     const msg = text || input;
     if (!msg.trim()) return;
 
-    // Optimistic update
     setMessages((prev) => [...prev, { from: 'user', text: msg, time: 'Just now' }]);
     setInput('');
-    setShowQuick(false);
 
-    try {
-      await sendSupportMessage(msg, 'user');
-      
-      // Check for quick replies (simulated librarian for some questions)
+    // Simulate librarian reply
+    setTimeout(() => {
       const replies = {
         'How do I reset my password?': 'Visit your Sanctuary settings. Under "Account," you will find the key to reset your credentials. If the path is unclear, write to me directly.',
         'I lost a fragment — can you help?': 'Fragments are stored in your private journal. If it was published to the Feed, it remains there. If it has vanished, describe it to me and I shall search the archives.',
         'How do Writer Circles work?': 'Circles are private lounges within the Parlour. Architects may enter. Collectives may build them. Each circle has its own covenant, seal, and keepers.',
         'Tell me about the Architect tier': 'The Architect tier unlocks unlimited Storyworlds, Tension Mapping, the Secret Web, Timeline Orchestration, and access to all Writer Circles. It is $10 per moon.',
       };
-
-      if (replies[msg]) {
-        setTimeout(async () => {
-          const reply = replies[msg];
-          await sendSupportMessage(reply, 'librarian');
-          setMessages((prev) => [...prev, { from: 'librarian', text: reply, time: 'Just now' }]);
-        }, 1200);
-      }
-    } catch (err) {
-      console.error('Failed to send message:', err);
-    }
+      const reply = replies[msg] || 'I have noted your query and shall look into it. The archives are vast, but I will find what you need.';
+      setMessages((prev) => [...prev, { from: 'librarian', text: reply, time: 'Just now' }]);
+      setShowQuick(false);
+    }, 1200);
   };
 
   return (

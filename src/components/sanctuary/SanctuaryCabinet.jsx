@@ -24,7 +24,7 @@ const characterData = {
       'Elias carries a map that belonged to his father, but it is a trap.',
       'He can read the old language but does not know he can.',
     ],
-    notes: 'Elias\'s arc mirrors the city itself: what appears broken is actually a design.',
+    notes: `Elias's arc mirrors the city itself: what appears broken is actually a design.`,
   },
   'the-weaver': {
     name: 'The Weaver',
@@ -41,7 +41,7 @@ const characterData = {
     traits: ['Patient', 'Manipulative', 'Genuinely loves Elias', 'Bound by the Pact'],
     relationships: [
       { name: 'Elias Thorne', type: 'Son / Unknowing pawn', tension: 92, note: 'Watches from the threads' },
-      { name: 'The Forgotten King', type: 'Prisoner / Old ally', tension: 76, note: 'The only person who knows the Weaver\'s true name' },
+      { name: 'The Forgotten King', type: 'Prisoner / Old ally', tension: 76, note: `The only person who knows the Weaver's true name` },
     ],
     secrets: [
       'The Weaver built the prison to protect the world, not to cage an enemy.',

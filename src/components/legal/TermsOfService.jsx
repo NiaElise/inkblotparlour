@@ -20,7 +20,7 @@ const sections = [
   },
   {
     title: 'V. Social Loops & Circles',
-    content: 'The Parlour is organized into Social Loops corresponding to your tier. Your loop determines which circles you may join, which conversations you can see, and which features are available to you. Writer Circles are private communities within the Parlour. Architects may join Architect-tier and unlisted circles. Collective members may create, join, and manage circles. Each circle has Keepers who set the rules, admit members, and may remove members who violate the circle\'s covenant.',
+    content: `The Parlour is organized into Social Loops corresponding to your tier. Your loop determines which circles you may join, which conversations you can see, and which features are available to you. Writer Circles are private communities within the Parlour. Architects may join Architect-tier and unlisted circles. Collective members may create, join, and manage circles. Each circle has Keepers who set the rules, admit members, and may remove members who violate the circle's covenant.`,
   },
   {
     title: 'VI. Acceptable Use',
