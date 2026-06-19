@@ -724,9 +724,12 @@ export default function WriterCircles() {
     ? circles
     : circles.filter((c) => c.tier === filterTier);
 
-  const handleJoin = (circleId) => {
-    if (!joinedCircles.includes(circleId)) {
+  const handleJoin = async (circleId) => {
+    try {
+      await joinCircle(circleId);
       setJoinedCircles([...joinedCircles, circleId]);
+    } catch (err) {
+      alert(err.message);
     }
   };
 
@@ -736,11 +739,32 @@ export default function WriterCircles() {
     setView('detail');
   };
 
-  const handleCreateCircle = (newCircle) => {
-    console.log('New circle created:', newCircle);
-    setShowCreateForm(false);
-    setView('browse');
-    // In real implementation, this would save to DB
+  const handleCreateCircle = async (newCircle) => {
+    try {
+      await createCircle(newCircle.name, newCircle.description);
+      setShowCreateForm(false);
+      setView('browse');
+      // Refresh circles
+      const data = await fetchCircles();
+      const mapped = data.map(c => ({
+        ...c,
+        tagline: c.tagline || 'A new sanctuary for writers.',
+        seal: c.seal || '◈',
+        members: 1,
+        online: 1,
+        tier: c.tier || 'Collective',
+        tags: c.tags || ['community'],
+        founders: ['You'],
+        mood: c.mood || 'New ink on fresh paper.',
+        rules: c.rules || ['Be kind', 'Write often'],
+        created: 'Today'
+      }));
+      const existingIds = new Set(mapped.map(c => c.id));
+      const uniqueMocks = FEATURED_CIRCLES.filter(c => !existingIds.has(c.id));
+      setCircles([...uniqueMocks, ...mapped]);
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   const myCircles = circles.filter((c) => joinedCircles.includes(c.id));

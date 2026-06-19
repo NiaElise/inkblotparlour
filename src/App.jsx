@@ -51,6 +51,8 @@ function ProtectedRoute({ children, adminOnly = false }) {
   return children;
 }
 
+import UserProfile from './components/UserProfile';
+
 export default function App() {
   return (
     <div className="min-h-screen selection:bg-sepia/30 selection:text-parchment-light">
@@ -63,6 +65,7 @@ export default function App() {
         <Route path="/tiers" element={<TiersPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/profile/:userId" element={<UserProfile />} />
         
         <Route 
           path="/admin" 

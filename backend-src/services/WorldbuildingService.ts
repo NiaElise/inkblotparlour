@@ -29,7 +29,7 @@ export class WorldbuildingService {
   }
 
   static async applyTemplate(userId: string, storyworldId: string, templateId: string): Promise<void> {
-    await StoryworldService.checkAccess(userId, storyworldId, 'Architect');
+    await StoryworldService.checkAccess(userId, storyworldId, 'Architect', true);
     
     const fragments: LoreTemplateFragment[] = await DB.query(`SELECT * FROM lore_template_fragments WHERE template_id = '${esc(templateId)}'`);
     for (const frag of fragments) {
@@ -43,7 +43,7 @@ export class WorldbuildingService {
   }
 
   static async createCharacter(userId: string, storyworldId: string, id: string, name: string, description?: string, data?: any): Promise<void> {
-    await StoryworldService.checkAccess(userId, storyworldId, 'Architect');
+    await StoryworldService.checkAccess(userId, storyworldId, 'Architect', true);
 
     const user = await UserService.getUser(userId);
     if (user && user.tier === 'Draftsman' && user.role !== 'admin') {
@@ -58,7 +58,7 @@ export class WorldbuildingService {
   }
 
   static async createLore(userId: string, storyworldId: string, id: string, title: string, content?: string, data?: any): Promise<void> {
-    await StoryworldService.checkAccess(userId, storyworldId, 'Architect');
+    await StoryworldService.checkAccess(userId, storyworldId, 'Architect', true);
 
     const user = await UserService.getUser(userId);
     if (user && user.tier === 'Draftsman' && user.role !== 'admin') {
@@ -82,17 +82,17 @@ export class WorldbuildingService {
   }
 
   static async createSecret(userId: string, storyworldId: string, id: string, title: string, content: string): Promise<void> {
-    await StoryworldService.checkAccess(userId, storyworldId, 'Architect');
+    await StoryworldService.checkAccess(userId, storyworldId, 'Architect', true);
     await DB.execute(`INSERT INTO secrets (id, storyworld_id, title, content) VALUES ('${esc(id)}', '${esc(storyworldId)}', '${esc(title)}', '${esc(content)}')`);
   }
 
   static async createTensionMap(userId: string, storyworldId: string, id: string, data: any): Promise<void> {
-    await StoryworldService.checkAccess(userId, storyworldId, 'Architect');
+    await StoryworldService.checkAccess(userId, storyworldId, 'Architect', true);
     await DB.execute(`INSERT INTO tension_maps (id, storyworld_id, data) VALUES ('${esc(id)}', '${esc(storyworldId)}', '${esc(JSON.stringify(data))}')`);
   }
 
   static async createTimeline(userId: string, storyworldId: string, id: string, title: string, events: any): Promise<void> {
-    await StoryworldService.checkAccess(userId, storyworldId, 'Architect');
+    await StoryworldService.checkAccess(userId, storyworldId, 'Architect', true);
     await DB.execute(`INSERT INTO timelines (id, storyworld_id, title, events) VALUES ('${esc(id)}', '${esc(storyworldId)}', '${esc(title)}', '${esc(JSON.stringify(events))}')`);
   }
 
@@ -125,7 +125,7 @@ export class WorldbuildingService {
   }
 
   static async getSecrets(userId: string, storyworldId: string): Promise<Secret[]> {
-    await StoryworldService.checkAccess(userId, storyworldId, 'Architect');
+    await StoryworldService.checkAccess(userId, storyworldId, 'Architect', true);
     return await DB.query(`SELECT * FROM secrets WHERE storyworld_id = '${esc(storyworldId)}'`);
   }
 
@@ -133,13 +133,13 @@ export class WorldbuildingService {
     const results = await DB.query(`SELECT storyworld_id FROM secrets WHERE id = '${esc(id)}'`);
     const secret = results[0];
     if (secret) {
-      await StoryworldService.checkAccess(userId, secret.storyworld_id, 'Architect');
+      await StoryworldService.checkAccess(userId, secret.storyworld_id, 'Architect', true);
     }
     await DB.execute(`UPDATE secrets SET title = '${esc(title)}', content = '${esc(content)}' WHERE id = '${esc(id)}'`);
   }
 
   static async getTensionMaps(userId: string, storyworldId: string): Promise<TensionMap[]> {
-    await StoryworldService.checkAccess(userId, storyworldId, 'Architect');
+    await StoryworldService.checkAccess(userId, storyworldId, 'Architect', true);
     return await DB.query(`SELECT * FROM tension_maps WHERE storyworld_id = '${esc(storyworldId)}'`);
   }
 
@@ -147,13 +147,13 @@ export class WorldbuildingService {
     const results = await DB.query(`SELECT storyworld_id FROM tension_maps WHERE id = '${esc(id)}'`);
     const map = results[0];
     if (map) {
-      await StoryworldService.checkAccess(userId, map.storyworld_id, 'Architect');
+      await StoryworldService.checkAccess(userId, map.storyworld_id, 'Architect', true);
     }
     await DB.execute(`UPDATE tension_maps SET data = '${esc(JSON.stringify(data))}' WHERE id = '${esc(id)}'`);
   }
 
   static async getTimelines(userId: string, storyworldId: string): Promise<any[]> {
-    await StoryworldService.checkAccess(userId, storyworldId, 'Architect');
+    await StoryworldService.checkAccess(userId, storyworldId, 'Architect', true);
     return await DB.query(`SELECT * FROM timelines WHERE storyworld_id = '${esc(storyworldId)}'`);
   }
 
@@ -161,18 +161,18 @@ export class WorldbuildingService {
     const results = await DB.query(`SELECT storyworld_id FROM timelines WHERE id = '${esc(id)}'`);
     const tl = results[0];
     if (tl) {
-      await StoryworldService.checkAccess(userId, tl.storyworld_id, 'Architect');
+      await StoryworldService.checkAccess(userId, tl.storyworld_id, 'Architect', true);
     }
     await DB.execute(`UPDATE timelines SET title = '${esc(title)}', events = '${esc(JSON.stringify(events))}' WHERE id = '${esc(id)}'`);
   }
 
   static async createSecretSociety(userId: string, storyworldId: string, id: string, name: string, description?: string): Promise<void> {
-    await StoryworldService.checkAccess(userId, storyworldId, 'Architect');
+    await StoryworldService.checkAccess(userId, storyworldId, 'Architect', true);
     await DB.execute(`INSERT INTO secret_societies (id, storyworld_id, name, description) VALUES ('${esc(id)}', '${esc(storyworldId)}', '${esc(name)}', '${esc(description || '')}')`);
   }
 
   static async getSecretSocieties(userId: string, storyworldId: string): Promise<any[]> {
-    await StoryworldService.checkAccess(userId, storyworldId, 'Architect');
+    await StoryworldService.checkAccess(userId, storyworldId, 'Architect', true);
     return await DB.query(`SELECT * FROM secret_societies WHERE storyworld_id = '${esc(storyworldId)}'`);
   }
 
@@ -180,7 +180,7 @@ export class WorldbuildingService {
     const results = await DB.query(`SELECT storyworld_id FROM secret_societies WHERE id = '${esc(id)}'`);
     const soc = results[0];
     if (soc) {
-      await StoryworldService.checkAccess(userId, soc.storyworld_id, 'Architect');
+      await StoryworldService.checkAccess(userId, soc.storyworld_id, 'Architect', true);
     }
     await DB.execute(`UPDATE secret_societies SET name = '${esc(name)}', description = '${esc(description || '')}' WHERE id = '${esc(id)}'`);
   }

@@ -82,8 +82,36 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-app.get('/api/me', auth, (req: any, res) => {
-  res.json(req.user);
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const user = await UserService.getUser(req.params.id);
+    if (user) {
+      const { password, ...safeUser } = user;
+      res.json(safeUser);
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+app.get('/api/users/:id/storyworlds', async (req, res) => {
+  try {
+    const worlds = await StoryworldService.getStoryworlds(req.params.id);
+    res.json(worlds);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+app.get('/api/users/:id/posts', async (req, res) => {
+  try {
+    const posts = await SocialService.getUserPosts(req.params.id);
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
 });
 
 app.put('/api/me/profile', auth, async (req: any, res) => {

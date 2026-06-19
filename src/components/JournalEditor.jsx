@@ -1,12 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const mockChapters = [
-  { id: 1, title: 'The Arrival', status: 'published', words: 2450, updated: '2 days ago' },
-  { id: 2, title: 'Threads in the Dark', status: 'draft', words: 1800, updated: '1 day ago' },
-  { id: 3, title: "The Weaver's Loom", status: 'draft', words: 620, updated: '3h ago' },
-  { id: 4, title: 'A Letter from Clara', status: 'idea', words: 120, updated: 'Just now' },
-];
+import { lookupDictionary } from '../api';
 
 const dict = {
   inkblot: 'n. A stain or mark made by ink on paper, often accidental but sometimes intentional.',
@@ -23,7 +17,29 @@ function DictPanel({ isOpen, onClose }) {
   const [search, setSearch] = useState('');
   const [result, setResult] = useState(null);
   const [searched, setSearched] = useState(false);
-  const h = () => { if (search.trim()) { setResult(dict[search.toLowerCase().trim()] || null); setSearched(true); } };
+  const [loading, setLoading] = useState(false);
+
+  const h = async () => { 
+    if (!search.trim()) return;
+    setLoading(true);
+    setSearched(true);
+    try {
+      const data = await lookupDictionary(search.toLowerCase().trim());
+      if (Array.isArray(data) && data[0]) {
+        const entry = data[0];
+        const definition = entry.meanings?.[0]?.definitions?.[0]?.definition || 'No definition found.';
+        const pos = entry.meanings?.[0]?.partOfSpeech || '';
+        setResult(`${pos}. ${definition}`);
+      } else {
+        setResult(dict[search.toLowerCase().trim()] || null);
+      }
+    } catch (err) {
+      setResult(dict[search.toLowerCase().trim()] || null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (<AnimatePresence>{isOpen && (<motion.div initial={{opacity:0,x:20}} animate={{opacity:1,x:0}} exit={{opacity:0,x:20}} className="w-80 shrink-0 border-l border-parchment/10 bg-inkwell/60 flex flex-col">
     <div className="flex items-center justify-between px-4 py-3 border-b border-parchment/10">
       <div className="flex items-center gap-2"><span className="text-sepia/60 text-sm">📖</span><span className="text-xs uppercase tracking-widest text-parchment/40">Dictionary</span></div>
@@ -32,13 +48,14 @@ function DictPanel({ isOpen, onClose }) {
     <div className="px-4 py-3 border-b border-parchment/10">
       <div className="flex items-center gap-1">
         <input type="text" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&h()} placeholder="Search..." className="flex-1 bg-ink-warm/50 border border-parchment/10 rounded-sm px-2.5 py-1.5 text-xs text-parchment/60 placeholder:text-parchment/20 focus:outline-none focus:border-sepia/30" />
-        <button onClick={h} className="px-2 py-1.5 rounded-sm bg-sepia/15 border border-sepia/15 text-parchment/50 hover:bg-sepia/25"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="5" cy="5" r="4"/><path d="M8 8l3 3"/></svg></button>
+        <button onClick={h} disabled={loading} className="px-2 py-1.5 rounded-sm bg-sepia/15 border border-sepia/15 text-parchment/50 hover:bg-sepia/25 disabled:opacity-50"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="5" cy="5" r="4"/><path d="M8 8l3 3"/></svg></button>
       </div>
     </div>
     <div className="flex-1 overflow-y-auto px-4 py-4">
-      {searched && !result && <div className="text-center py-8"><p className="text-parchment/20 text-lg mb-2">⌇</p><p className="text-xs text-parchment/30 italic">Not found in the lexicon.</p></div>}
-      {result && <div className="border-l-2 border-sepia/30 pl-3"><p className="text-sm font-serif text-parchment/80 italic mb-1">&ldquo;{search}&rdquo;</p><p className="text-xs text-parchment/50 leading-relaxed font-light">{result}</p></div>}
-      {!searched && <div className="text-center py-8"><p className="text-parchment/20 text-lg mb-2">📖</p><p className="text-xs text-parchment/30 italic">Search the lexicon.</p></div>}
+      {loading && <div className="text-center py-8 animate-pulse text-parchment/20 italic text-[10px]">Consulting the lexicon...</div>}
+      {!loading && searched && !result && <div className="text-center py-8"><p className="text-parchment/20 text-lg mb-2">⌇</p><p className="text-xs text-parchment/30 italic">Not found in the lexicon.</p></div>}
+      {!loading && result && <div className="border-l-2 border-sepia/30 pl-3"><p className="text-sm font-serif text-parchment/80 italic mb-1">&ldquo;{search}&rdquo;</p><p className="text-xs text-parchment/50 leading-relaxed font-light">{result}</p></div>}
+      {!loading && !searched && <div className="text-center py-8"><p className="text-parchment/20 text-lg mb-2">📖</p><p className="text-xs text-parchment/30 italic">Search the lexicon.</p></div>}
     </div>
     <div className="px-4 py-2 border-t border-parchment/10"><p className="text-[7px] text-parchment/15 text-center uppercase tracking-widest">Built-in Dictionary · All Tiers</p></div>
   </motion.div>)}</AnimatePresence>);

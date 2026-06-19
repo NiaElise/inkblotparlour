@@ -12,23 +12,31 @@ export class SocialService {
   }
 
   static async getFeed(userId?: string, limit: number = 20, offset: number = 0): Promise<any[]> {
-    // Basic feed: all public posts
-    return await DB.query(`
+    // Basic feed: all public posts, filtered by hidden if userId is provided
+    let query = `
       SELECT p.*, u.username, u.avatar 
       FROM posts p 
       JOIN users u ON p.user_id = u.id 
-      WHERE p.is_archived = 0
+      WHERE p.is_archived = 0`;
+
+    if (userId) {
+      query += ` AND p.id NOT IN (SELECT post_id FROM hidden_posts WHERE user_id = '${escape(userId)}')`;
+    }
+
+    query += ` ORDER BY p.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+    
+    return await DB.query(query);
       ORDER BY p.created_at DESC 
       LIMIT ${limit} OFFSET ${offset}
     `);
   }
 
   static async getUserPosts(userId: string): Promise<Post[]> {
-    return await DB.query(`SELECT * FROM posts WHERE user_id = '${escape(userId)}' ORDER BY created_at DESC`);
+    let query = `SELECT * FROM posts WHERE user_id = '${escape(userId)}' ORDER BY created_at DESC`);
   }
 
   static async getAllPosts(): Promise<Post[]> {
-    return await DB.query(`SELECT * FROM posts ORDER BY created_at DESC`);
+    let query = `SELECT * FROM posts ORDER BY created_at DESC`);
   }
 
   static async archivePost(postId: string, isArchived: boolean): Promise<void> {
@@ -36,13 +44,15 @@ export class SocialService {
   }
 
   static async hidePost(userId: string, postId: string): Promise<void> {
-    // In a real app, this would add to a 'hidden_posts' table for the user
+    // Add to hidden_posts table
     // For now, let's just log it or ignore
-    console.log(`User ${userId} hid post ${postId}`);
+    const id = 'hide_' + Math.random().toString(36).substring(2, 11);
+    await DB.execute(`INSERT INTO hidden_posts (id, user_id, post_id) VALUES ('${id}', '${escape(userId)}', '${escape(postId)}')`);
   }
 
   static async flagPost(userId: string, postId: string, reason: string): Promise<void> {
-    await DB.execute(`INSERT INTO flagged_posts (user_id, post_id, reason) VALUES ('${escape(userId)}', '${escape(postId)}', '${escape(reason)}')`);
+    const id = 'flag_' + Math.random().toString(36).substring(2, 11);
+    await DB.execute(`INSERT INTO flagged_posts (id, user_id, post_id, reason, status) VALUES ('${id}', '${escape(userId)}', '${escape(postId)}', '${escape(reason)}', 'pending')`);
   }
 
   // Asks
@@ -51,7 +61,7 @@ export class SocialService {
   }
 
   static async getAllAsks(userId: string): Promise<Ask[]> {
-    return await DB.query(`
+    let query = `
       SELECT a.*, u.username as from_username, u.avatar as from_avatar 
       FROM asks a 
       LEFT JOIN users u ON a.from_user_id = u.id 
@@ -89,12 +99,12 @@ export class SocialService {
   }
 
   static async getStoryChapters(parentId: string): Promise<any[]> {
-    return await DB.query(`SELECT * FROM journals WHERE parent_id = '${escape(parentId)}' ORDER BY chapter_number ASC`);
+    let query = `SELECT * FROM journals WHERE parent_id = '${escape(parentId)}' ORDER BY chapter_number ASC`);
   }
 
   // Support
   static async getSupportMessages(userId: string): Promise<any[]> {
-    return await DB.query(`SELECT * FROM support_messages WHERE user_id = '${escape(userId)}' ORDER BY created_at ASC`);
+    let query = `SELECT * FROM support_messages WHERE user_id = '${escape(userId)}' ORDER BY created_at ASC`);
   }
 
   static async createSupportMessage(userId: string, message: string, sender: 'user' | 'admin'): Promise<void> {
@@ -113,7 +123,7 @@ export class SocialService {
   }
 
   static async getComments(postId: string): Promise<Comment[]> {
-    return await DB.query(`
+    let query = `
       SELECT c.*, u.username, u.avatar 
       FROM comments c 
       JOIN users u ON c.user_id = u.id 

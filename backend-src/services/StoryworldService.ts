@@ -32,9 +32,9 @@ export class StoryworldService {
     if (!user) throw new Error('User not found');
     
     if (user.role !== 'admin') {
-      const worlds = await this.getStoryworlds(userId);
-      if (user.tier === 'Draftsman' && worlds.length >= 1) {
-        throw new Error('Draftsman tier is limited to 1 storyworld. Upgrade to Architect for unlimited storyworlds.');
+      const ownedWorlds = await DB.query(`SELECT count(*) as count FROM storyworlds WHERE user_id = '${escape(userId)}'`);
+      if (user.tier === 'Draftsman' && ownedWorlds[0].count >= 1) {
+        throw new Error('Draftsman tier is limited to owning 1 storyworld. Upgrade to Architect for unlimited storyworlds.');
       }
     }
 
@@ -77,14 +77,20 @@ export class StoryworldService {
     await DB.execute(`DELETE FROM storyworld_members WHERE storyworld_id = '${escape(storyworldId)}' AND user_id = '${escape(memberId)}'`);
   }
 
-  static async checkAccess(userId: string, storyworldId: string, requiredRole: 'Architect' | 'Draftsman' = 'Draftsman'): Promise<void> {
+  static async checkAccess(userId: string, storyworldId: string, requiredRole: 'Architect' | 'Draftsman' = 'Draftsman', isAdvancedTool: boolean = false): Promise<void> {
     const user = await UserService.getUser(userId);
     if (!user) throw new Error('User not found');
     if (user.role === 'admin') return;
 
+    // Tier restriction for Advanced Tools
+    if (isAdvancedTool && user.tier === 'Draftsman') {
+      throw new Error('Advanced tools (Secrets, Tension Maps, Timelines) are only available for Architect and Collective tiers.');
+    }
+
     const storyworld = await this.getStoryworld(storyworldId);
     if (storyworld && storyworld.user_id === userId) return;
 
+    // Membership check for collaborators
     const memberships = await DB.query(`SELECT role FROM storyworld_members WHERE storyworld_id = '${escape(storyworldId)}' AND user_id = '${escape(userId)}'`);
     const membership = memberships[0];
     

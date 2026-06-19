@@ -63,6 +63,21 @@ export const fetchMe = async () => {
   return res.json();
 };
 
+export const fetchUser = async (id) => {
+  const res = await authFetch(`${API_BASE}/users/${id}`);
+  return res.json();
+};
+
+export const fetchUserStoryworlds = async (id) => {
+  const res = await authFetch(`${API_BASE}/users/${id}/storyworlds`);
+  return res.json();
+};
+
+export const fetchUserPosts = async (id) => {
+  const res = await authFetch(`${API_BASE}/users/${id}/posts`);
+  return res.json();
+};
+
 // Admin
 export const fetchAdminUsers = async () => {
   const res = await authFetch(`${API_BASE}/admin/users`);
