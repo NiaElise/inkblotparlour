@@ -338,6 +338,22 @@ export const updateCustomization = async (data) => {
   return res.json();
 };
 
+export const updateProfile = async (data) => {
+  const res = await authFetch(`${API_BASE}/me/profile`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};
+
+export const updateSecurity = async (data) => {
+  const res = await authFetch(`${API_BASE}/me/security`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};
+
 
 export const fetchTimelines = async (storyworldId) => {
   const res = await authFetch(`${API_BASE}/storyworlds/${storyworldId}/timelines`);

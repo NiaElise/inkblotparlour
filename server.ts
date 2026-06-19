@@ -19,14 +19,18 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // Middleware to get current user from Authorization header
-const auth = (req, res, next) => {
+const auth = async (req: any, res: any, next: any) => {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const userId = authHeader.substring(7);
-    const user = UserService.getUser(userId);
-    if (user) {
-      req.user = user;
-      return next();
+    try {
+      const user = await UserService.getUser(userId);
+      if (user) {
+        req.user = user;
+        return next();
+      }
+    } catch (err) {
+      console.error('Auth middleware error:', err);
     }
   }
   // Optional: bypass for login/signup
@@ -37,7 +41,7 @@ const auth = (req, res, next) => {
 };
 
 // Admin only middleware
-const adminOnly = (req, res, next) => {
+const adminOnly = (req: any, res: any, next: any) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
@@ -48,58 +52,109 @@ const adminOnly = (req, res, next) => {
 const genId = () => Math.random().toString(36).substring(2, 11);
 
 // --- Auth Loop ---
-app.post('/api/signup', (req, res) => {
-  const { username, email, password, tier } = req.body;
-  if (UserService.getUserByEmail(email)) {
-    return res.status(400).json({ error: 'Email already registered' });
-  }
-  const id = 'user_' + genId();
-  UserService.createUser(id, username, tier || 'Draftsman', email, password);
-  const newUser = UserService.getUser(id);
-  res.json(newUser);
-});
-
-app.post('/api/login', (req, res) => {
-  const { email, password } = req.body;
-  const user = UserService.getUserByEmail(email);
-  if (user && user.password === password) {
-    res.json(user);
-  } else {
-    res.status(401).json({ error: 'Invalid credentials' });
+app.post('/api/signup', async (req, res) => {
+  try {
+    const { username, email, password, tier } = req.body;
+    const existing = await UserService.getUserByEmail(email);
+    if (existing) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+    const id = 'user_' + genId();
+    await UserService.createUser(id, username, tier || 'Draftsman', email, password);
+    const newUser = await UserService.getUser(id);
+    res.json(newUser);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.get('/api/me', auth, (req, res) => {
+app.post('/api/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await UserService.getUserByEmail(email);
+    if (user && user.password === password) {
+      res.json(user);
+    } else {
+      res.status(401).json({ error: 'Invalid credentials' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+app.get('/api/me', auth, (req: any, res) => {
   res.json(req.user);
 });
 
+app.put('/api/me/profile', auth, async (req: any, res) => {
+  try {
+    await UserService.updateProfile(req.user.id, req.body);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+app.put('/api/me/security', auth, async (req: any, res) => {
+  try {
+    await UserService.updateSecurity(req.user.id, req.body);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+app.put('/api/me/customization', auth, async (req: any, res) => {
+  try {
+    await UserService.updateCustomization(req.user.id, req.body);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
 // --- Admin Loop ---
-app.get('/api/admin/users', auth, adminOnly, (req, res) => {
-  res.json(UserService.getAllUsers());
+app.get('/api/admin/users', auth, adminOnly, async (req, res) => {
+  try {
+    const users = await UserService.getAllUsers();
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
 });
 
-app.get('/api/admin/storyworlds', auth, adminOnly, (req, res) => {
-  res.json(StoryworldService.getAllStoryworlds());
+app.get('/api/admin/storyworlds', auth, adminOnly, async (req, res) => {
+  try {
+    const worlds = await StoryworldService.getAllStoryworlds();
+    res.json(worlds);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
 });
 
-app.get('/api/admin/posts', auth, adminOnly, (req, res) => {
-  res.json(SocialService.getAllPosts());
+app.get('/api/admin/posts', auth, adminOnly, async (req, res) => {
+  try {
+    const posts = await SocialService.getAllPosts();
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
 });
 
 // --- Social Loop ---
-app.get('/api/feed', (req, res) => {
+app.get('/api/feed', auth, async (req: any, res) => {
   try {
-    const feed = SocialService.getFeed(req.user?.id);
+    const feed = await SocialService.getFeed(req.user?.id);
     res.json(feed);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/posts', auth, (req, res) => {
+app.post('/api/posts', auth, async (req: any, res) => {
   try {
     const id = genId();
-    SocialService.createPost(req.user.id, id, req.body.content, req.body.storyworldId, req.body.loreId, req.body.characterId);
+    await SocialService.createPost(req.user.id, id, req.body.content, req.body.storyworldId, req.body.loreId, req.body.characterId);
     res.json({ id, content: req.body.content });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
@@ -107,83 +162,83 @@ app.post('/api/posts', auth, (req, res) => {
 });
 
 // Post Governance
-app.post('/api/posts/:id/archive', auth, (req, res) => {
+app.post('/api/posts/:id/archive', auth, async (req: any, res) => {
   try {
-    SocialService.archivePost(req.params.id, req.body.isArchived);
+    await SocialService.archivePost(req.params.id, req.body.isArchived);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/posts/:id/hide', auth, (req, res) => {
+app.post('/api/posts/:id/hide', auth, async (req: any, res) => {
   try {
-    SocialService.hidePost(req.user.id, req.params.id);
+    await SocialService.hidePost(req.user.id, req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/posts/:id/flag', auth, (req, res) => {
+app.post('/api/posts/:id/flag', auth, async (req: any, res) => {
   try {
-    SocialService.flagPost(req.user.id, req.params.id, req.body.reason);
+    await SocialService.flagPost(req.user.id, req.params.id, req.body.reason);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/lore/:id/archive', auth, (req, res) => {
+app.post('/api/lore/:id/archive', auth, async (req: any, res) => {
   try {
-    WorldbuildingService.archiveLore(req.user.id, req.params.id, req.body.isArchived);
+    await WorldbuildingService.archiveLore(req.user.id, req.params.id, req.body.isArchived);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.get('/api/asks', auth, (req, res) => {
+app.get('/api/asks', auth, async (req: any, res) => {
   try {
-    const asks = SocialService.getAllAsks(req.user.id);
+    const asks = await SocialService.getAllAsks(req.user.id);
     res.json(asks);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/asks', auth, (req, res) => {
+app.post('/api/asks', auth, async (req: any, res) => {
   try {
     const id = genId();
-    SocialService.createAsk(req.user.id, req.body.recipientId, id, req.body.question);
+    await SocialService.createAsk(req.user.id, req.body.recipientId, id, req.body.question);
     res.json({ id, question: req.body.question });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/asks/:id/answer', auth, (req, res) => {
+app.post('/api/asks/:id/answer', auth, async (req: any, res) => {
   try {
-    SocialService.answerAsk(req.user.id, req.params.id, req.body.answer, req.body.isPublic);
+    await SocialService.answerAsk(req.user.id, req.params.id, req.body.answer, req.body.isPublic);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.get('/api/journals', auth, (req, res) => {
+app.get('/api/journals', auth, async (req: any, res) => {
   try {
-    const journals = SocialService.getJournals(req.user.id, req.query.type as any);
+    const journals = await SocialService.getJournals(req.user.id, req.query.type as any);
     res.json(journals);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/journals', auth, (req, res) => {
+app.post('/api/journals', auth, async (req: any, res) => {
   try {
     const id = genId();
-    SocialService.createJournal(
+    await SocialService.createJournal(
       req.user.id, 
       id, 
       req.body.title, 
@@ -198,9 +253,9 @@ app.post('/api/journals', auth, (req, res) => {
   }
 });
 
-app.get('/api/journals/:parentId/chapters', auth, (req, res) => {
+app.get('/api/journals/:parentId/chapters', auth, async (req: any, res) => {
   try {
-    const chapters = SocialService.getStoryChapters(req.params.parentId);
+    const chapters = await SocialService.getStoryChapters(req.params.parentId);
     res.json(chapters);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
@@ -208,7 +263,7 @@ app.get('/api/journals/:parentId/chapters', auth, (req, res) => {
 });
 
 // Dictionary Lookup
-app.get('/api/dictionary/lookup', auth, async (req, res) => {
+app.get('/api/dictionary/lookup', auth, async (req: any, res) => {
   try {
     const word = req.query.word;
     if (!word) return res.status(400).json({ error: 'Word required' });
@@ -221,18 +276,18 @@ app.get('/api/dictionary/lookup', auth, async (req, res) => {
 });
 
 // Support Messages
-app.get('/api/support/messages', auth, (req, res) => {
+app.get('/api/support/messages', auth, async (req: any, res) => {
   try {
-    const messages = SocialService.getSupportMessages(req.user.id);
+    const messages = await SocialService.getSupportMessages(req.user.id);
     res.json(messages);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/support/messages', auth, (req, res) => {
+app.post('/api/support/messages', auth, async (req: any, res) => {
   try {
-    SocialService.createSupportMessage(req.user.id, req.body.message, req.body.sender || 'user');
+    await SocialService.createSupportMessage(req.user.id, req.body.message, req.body.sender || 'user');
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
@@ -240,37 +295,37 @@ app.post('/api/support/messages', auth, (req, res) => {
 });
 
 // --- Writer Circles ---
-app.get('/api/circles', (req, res) => {
+app.get('/api/circles', async (req, res) => {
   try {
-    const circles = CircleService.getCircles();
+    const circles = await CircleService.getCircles();
     res.json(circles);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/circles', auth, (req, res) => {
+app.post('/api/circles', auth, async (req: any, res) => {
   try {
     const id = genId();
-    CircleService.createCircle(req.user.id, id, req.body.name, req.body.description);
+    await CircleService.createCircle(req.user.id, id, req.body.name, req.body.description);
     res.json({ id, name: req.body.name });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/circles/:id/join', auth, (req, res) => {
+app.post('/api/circles/:id/join', auth, async (req: any, res) => {
   try {
-    CircleService.joinCircle(req.user.id, req.params.id);
+    await CircleService.joinCircle(req.user.id, req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.get('/api/circles/:id/members', (req, res) => {
+app.get('/api/circles/:id/members', async (req, res) => {
   try {
-    const members = CircleService.getMembers(req.params.id);
+    const members = await CircleService.getMembers(req.params.id);
     res.json(members);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
@@ -278,19 +333,19 @@ app.get('/api/circles/:id/members', (req, res) => {
 });
 
 // Writing Rooms
-app.get('/api/circles/:id/writing-rooms', auth, (req, res) => {
+app.get('/api/circles/:id/writing-rooms', auth, async (req: any, res) => {
   try {
-    const rooms = CircleService.getWritingRooms(req.params.id);
+    const rooms = await CircleService.getWritingRooms(req.params.id);
     res.json(rooms);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/circles/:id/writing-rooms', auth, (req, res) => {
+app.post('/api/circles/:id/writing-rooms', auth, async (req: any, res) => {
   try {
     const id = genId();
-    CircleService.createWritingRoom(req.user.id, req.params.id, id, req.body.name, req.body.description);
+    await CircleService.createWritingRoom(req.user.id, req.params.id, id, req.body.name, req.body.description);
     res.json({ id, name: req.body.name });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
@@ -298,46 +353,46 @@ app.post('/api/circles/:id/writing-rooms', auth, (req, res) => {
 });
 
 // --- Worldbuilding Loop ---
-app.get('/api/storyworlds', auth, (req, res) => {
+app.get('/api/storyworlds', auth, async (req: any, res) => {
   try {
-    const worlds = StoryworldService.getStoryworlds(req.user.id);
+    const worlds = await StoryworldService.getStoryworlds(req.user.id);
     res.json(worlds);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/storyworlds', auth, (req, res) => {
+app.post('/api/storyworlds', auth, async (req: any, res) => {
   try {
     const id = genId();
-    StoryworldService.createStoryworld(req.user.id, id, req.body.title, req.body.description);
+    await StoryworldService.createStoryworld(req.user.id, id, req.body.title, req.body.description);
     res.json({ id, title: req.body.title });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/storyworlds/:id/members', auth, (req, res) => {
+app.post('/api/storyworlds/:id/members', auth, async (req: any, res) => {
   try {
-    StoryworldService.addMember(req.user.id, req.params.id, req.body.userId, req.body.role);
+    await StoryworldService.addMember(req.user.id, req.params.id, req.body.userId, req.body.role);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/storyworlds/:id/invite', auth, (req, res) => {
+app.post('/api/storyworlds/:id/invite', auth, async (req: any, res) => {
   try {
-    StoryworldService.inviteMember(req.user.id, req.params.id, req.body.identifier, req.body.role);
+    await StoryworldService.inviteMember(req.user.id, req.params.id, req.body.identifier, req.body.role);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.delete('/api/storyworlds/:id/members/:userId', auth, (req, res) => {
+app.delete('/api/storyworlds/:id/members/:userId', auth, async (req: any, res) => {
   try {
-    StoryworldService.removeMember(req.user.id, req.params.id, req.params.userId);
+    await StoryworldService.removeMember(req.user.id, req.params.id, req.params.userId);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
@@ -345,19 +400,19 @@ app.delete('/api/storyworlds/:id/members/:userId', auth, (req, res) => {
 });
 
 // Characters
-app.get('/api/storyworlds/:id/characters', auth, (req, res) => {
+app.get('/api/storyworlds/:id/characters', auth, async (req: any, res) => {
   try {
-    const characters = WorldbuildingService.getCharacters(req.user.id, req.params.id);
+    const characters = await WorldbuildingService.getCharacters(req.user.id, req.params.id);
     res.json(characters);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/storyworlds/:id/characters', auth, (req, res) => {
+app.post('/api/storyworlds/:id/characters', auth, async (req: any, res) => {
   try {
     const id = genId();
-    WorldbuildingService.createCharacter(req.user.id, req.params.id, id, req.body.name, req.body.description, req.body.data);
+    await WorldbuildingService.createCharacter(req.user.id, req.params.id, id, req.body.name, req.body.description, req.body.data);
     res.json({ id, name: req.body.name });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
@@ -365,19 +420,19 @@ app.post('/api/storyworlds/:id/characters', auth, (req, res) => {
 });
 
 // Lore
-app.get('/api/storyworlds/:id/lore', auth, (req, res) => {
+app.get('/api/storyworlds/:id/lore', auth, async (req: any, res) => {
   try {
-    const lore = WorldbuildingService.getLore(req.user.id, req.params.id);
+    const lore = await WorldbuildingService.getLore(req.user.id, req.params.id);
     res.json(lore);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/storyworlds/:id/lore', auth, (req, res) => {
+app.post('/api/storyworlds/:id/lore', auth, async (req: any, res) => {
   try {
     const id = genId();
-    WorldbuildingService.createLore(req.user.id, req.params.id, id, req.body.title, req.body.content, req.body.data);
+    await WorldbuildingService.createLore(req.user.id, req.params.id, id, req.body.title, req.body.content, req.body.data);
     res.json({ id, title: req.body.title });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
@@ -385,18 +440,18 @@ app.post('/api/storyworlds/:id/lore', auth, (req, res) => {
 });
 
 // Lore Templates
-app.get('/api/lore-templates', auth, (req, res) => {
+app.get('/api/lore-templates', auth, async (req: any, res) => {
   try {
-    const templates = WorldbuildingService.getLoreTemplates();
+    const templates = await WorldbuildingService.getLoreTemplates();
     res.json(templates);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/storyworlds/:id/apply-template', auth, (req, res) => {
+app.post('/api/storyworlds/:id/apply-template', auth, async (req: any, res) => {
   try {
-    WorldbuildingService.applyTemplate(req.user.id, req.params.id, req.body.templateId);
+    await WorldbuildingService.applyTemplate(req.user.id, req.params.id, req.body.templateId);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
@@ -404,33 +459,33 @@ app.post('/api/storyworlds/:id/apply-template', auth, (req, res) => {
 });
 
 // Admin Templates
-app.post('/api/admin/lore-templates', auth, (req, res) => {
+app.post('/api/admin/lore-templates', auth, async (req: any, res) => {
   try {
     if (req.user.role !== 'admin') throw new Error('Unauthorized');
     const id = genId();
-    WorldbuildingService.createLoreTemplate(id, req.body.name, req.body.genre, req.body.description);
+    await WorldbuildingService.createLoreTemplate(id, req.body.name, req.body.genre, req.body.description);
     res.json({ id, name: req.body.name });
   } catch (err) {
     res.status(403).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/admin/lore-templates/:id/fragments', auth, (req, res) => {
+app.post('/api/admin/lore-templates/:id/fragments', auth, async (req: any, res) => {
   try {
     if (req.user.role !== 'admin') throw new Error('Unauthorized');
     const id = genId();
-    WorldbuildingService.addTemplateFragment(id, req.params.id, req.body.title, req.body.content, req.body.category);
+    await WorldbuildingService.addTemplateFragment(id, req.params.id, req.body.title, req.body.content, req.body.category);
     res.json({ id, title: req.body.title });
   } catch (err) {
     res.status(403).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/admin/lore-templates/:id/characters', auth, (req, res) => {
+app.post('/api/admin/lore-templates/:id/characters', auth, async (req: any, res) => {
   try {
     if (req.user.role !== 'admin') throw new Error('Unauthorized');
     const id = genId();
-    WorldbuildingService.addTemplateCharacter(id, req.params.id, req.body.name, req.body.role, req.body.description);
+    await WorldbuildingService.addTemplateCharacter(id, req.params.id, req.body.name, req.body.role, req.body.description);
     res.json({ id, name: req.body.name });
   } catch (err) {
     res.status(403).json({ error: (err as Error).message });
@@ -438,37 +493,37 @@ app.post('/api/admin/lore-templates/:id/characters', auth, (req, res) => {
 });
 
 // Gated Features (Secrets, Tension, Timelines)
-app.get('/api/storyworlds/:id/secrets', auth, (req, res) => {
+app.get('/api/storyworlds/:id/secrets', auth, async (req: any, res) => {
   try {
-    const secrets = WorldbuildingService.getSecrets(req.user.id, req.params.id);
+    const secrets = await WorldbuildingService.getSecrets(req.user.id, req.params.id);
     res.json(secrets);
   } catch (err) {
     res.status(403).json({ error: (err as Error).message });
   }
 });
 
-app.post('/api/storyworlds/:id/secrets', auth, (req, res) => {
+app.post('/api/storyworlds/:id/secrets', auth, async (req: any, res) => {
   try {
     const id = genId();
-    WorldbuildingService.createSecret(req.user.id, req.params.id, id, req.body.title, req.body.content);
+    await WorldbuildingService.createSecret(req.user.id, req.params.id, id, req.body.title, req.body.content);
     res.json({ id, title: req.body.title });
   } catch (err) {
     res.status(403).json({ error: (err as Error).message });
   }
 });
 
-app.get('/api/storyworlds/:id/tension', auth, (req, res) => {
+app.get('/api/storyworlds/:id/tension', auth, async (req: any, res) => {
   try {
-    const maps = WorldbuildingService.getTensionMaps(req.user.id, req.params.id);
+    const maps = await WorldbuildingService.getTensionMaps(req.user.id, req.params.id);
     res.json(maps);
   } catch (err) {
     res.status(403).json({ error: (err as Error).message });
   }
 });
 
-app.get('/api/storyworlds/:id/timelines', auth, (req, res) => {
+app.get('/api/storyworlds/:id/timelines', auth, async (req: any, res) => {
   try {
-    const timelines = WorldbuildingService.getTimelines(req.user.id, req.params.id);
+    const timelines = await WorldbuildingService.getTimelines(req.user.id, req.params.id);
     res.json(timelines);
   } catch (err) {
     res.status(403).json({ error: (err as Error).message });

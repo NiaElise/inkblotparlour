@@ -8,6 +8,8 @@ export interface User {
   role: 'admin' | 'user';
   tier: UserTier;
   customization?: string; // JSON string for aesthetic customization
+  avatar?: string;
+  banner?: string;
   created_at: string;
 }
 
