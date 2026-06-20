@@ -13,6 +13,12 @@ const dict = {
   thread: 'n. A narrative line connecting events, characters, and secrets.',
 };
 
+const mockChapters = [
+  { id: 1, title: 'Chapter 1: The First Thread', status: 'published', words: 1200, updated: '2d ago' },
+  { id: 2, title: 'Chapter 2: The Resisting Ink', status: 'published', words: 850, updated: '1d ago' },
+  { id: 3, title: 'Chapter 3: Tightening Knots', status: 'draft', words: 420, updated: '3h ago' },
+];
+
 function DictPanel({ isOpen, onClose }) {
   const [search, setSearch] = useState('');
   const [result, setResult] = useState(null);

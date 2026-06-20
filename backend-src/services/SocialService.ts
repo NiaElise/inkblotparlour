@@ -26,17 +26,16 @@ export class SocialService {
     query += ` ORDER BY p.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
     
     return await DB.query(query);
-      ORDER BY p.created_at DESC 
-      LIMIT ${limit} OFFSET ${offset}
-    `);
   }
 
   static async getUserPosts(userId: string): Promise<Post[]> {
-    let query = `SELECT * FROM posts WHERE user_id = '${escape(userId)}' ORDER BY created_at DESC`);
+    let query = `SELECT * FROM posts WHERE user_id = '${escape(userId)}' ORDER BY created_at DESC`;
+    return await DB.query(query);
   }
 
   static async getAllPosts(): Promise<Post[]> {
-    let query = `SELECT * FROM posts ORDER BY created_at DESC`);
+    let query = `SELECT * FROM posts ORDER BY created_at DESC`;
+    return await DB.query(query);
   }
 
   static async archivePost(postId: string, isArchived: boolean): Promise<void> {
@@ -44,8 +43,6 @@ export class SocialService {
   }
 
   static async hidePost(userId: string, postId: string): Promise<void> {
-    // Add to hidden_posts table
-    // For now, let's just log it or ignore
     const id = 'hide_' + Math.random().toString(36).substring(2, 11);
     await DB.execute(`INSERT INTO hidden_posts (id, user_id, post_id) VALUES ('${id}', '${escape(userId)}', '${escape(postId)}')`);
   }
@@ -67,7 +64,8 @@ export class SocialService {
       LEFT JOIN users u ON a.from_user_id = u.id 
       WHERE a.to_user_id = '${escape(userId)}'
       ORDER BY a.created_at DESC
-    `);
+    `;
+    return await DB.query(query);
   }
 
   static async answerAsk(userId: string, askId: string, answer: string, isPublic: boolean = true): Promise<void> {
@@ -99,12 +97,14 @@ export class SocialService {
   }
 
   static async getStoryChapters(parentId: string): Promise<any[]> {
-    let query = `SELECT * FROM journals WHERE parent_id = '${escape(parentId)}' ORDER BY chapter_number ASC`);
+    let query = `SELECT * FROM journals WHERE parent_id = '${escape(parentId)}' ORDER BY chapter_number ASC`;
+    return await DB.query(query);
   }
 
   // Support
   static async getSupportMessages(userId: string): Promise<any[]> {
-    let query = `SELECT * FROM support_messages WHERE user_id = '${escape(userId)}' ORDER BY created_at ASC`);
+    let query = `SELECT * FROM support_messages WHERE user_id = '${escape(userId)}' ORDER BY created_at ASC`;
+    return await DB.query(query);
   }
 
   static async createSupportMessage(userId: string, message: string, sender: 'user' | 'admin'): Promise<void> {
@@ -129,6 +129,7 @@ export class SocialService {
       JOIN users u ON c.user_id = u.id 
       WHERE c.post_id = '${escape(postId)}' 
       ORDER BY c.created_at ASC
-    `);
+    `;
+    return await DB.query(query);
   }
 }
