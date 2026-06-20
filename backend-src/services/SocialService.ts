@@ -82,10 +82,15 @@ export class SocialService {
   }
 
   // Journals
-  static async getJournals(userId: string, type?: 'standalone' | 'story'): Promise<any[]> {
+  static async getJournals(userId: string, type?: 'standalone' | 'story', isSeries?: boolean): Promise<any[]> {
     let query = `SELECT * FROM journals WHERE user_id = '${escape(userId)}'`;
     if (type) {
       query += ` AND type = '${escape(type)}'`;
+    }
+    if (isSeries === true) {
+      query += ` AND parent_id IS NULL`;
+    } else if (isSeries === false) {
+      query += ` AND parent_id IS NOT NULL`;
     }
     return await DB.query(query + ` ORDER BY created_at DESC`);
   }

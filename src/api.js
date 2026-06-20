@@ -146,6 +146,11 @@ export const createJournal = async (title, content, type = 'standalone', chapter
   return res.json();
 };
 
+export const fetchSeries = async () => {
+  const res = await authFetch(`${API_BASE}/journals?type=story&isSeries=true`);
+  return res.json();
+};
+
 export const fetchStoryChapters = async (parentId) => {
   const res = await authFetch(`${API_BASE}/journals/${parentId}/chapters`);
   return res.json();

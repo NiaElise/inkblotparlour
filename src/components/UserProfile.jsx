@@ -120,6 +120,9 @@ export default function UserProfile() {
       <div className="grid md:grid-cols-3 gap-8 px-6">
         <div className="space-y-5">
           <div className="card-paper rounded-sm p-5"><h3 className="text-[10px] uppercase tracking-widest text-parchment/30 mb-2">About</h3><p className="text-sm text-parchment/60 leading-relaxed font-light">{u.bio}</p></div>
+          {u.links && u.links.length > 0 && (
+            <div className="card-paper rounded-sm p-5"><h3 className="text-[10px] uppercase tracking-widest text-parchment/30 mb-3">Links</h3>{u.links.map(l => <a key={l} href={l} target="_blank" rel="noopener noreferrer" className="block text-xs text-sepia/60 hover:text-sepia truncate underline underline-offset-2 mb-1">{l.replace('https://','')}</a>)}</div>
+          )}
           <div className="card-paper rounded-sm p-5"><h3 className="text-[10px] uppercase tracking-widest text-parchment/30 mb-3">Archive</h3><div className="grid grid-cols-3 gap-3 text-center">
             {[{label:'Worlds',val:u.stats.worlds},{label:'Fragments',val:u.stats.fragments},{label:'Echoes',val:u.stats.echoes}].map(s => (<div key={s.label}><div className="text-lg font-serif text-parchment/70">{s.val}</div><div className="text-[9px] text-parchment/30 uppercase tracking-wider">{s.label}</div></div>))}
           </div></div>

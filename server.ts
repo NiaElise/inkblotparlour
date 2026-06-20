@@ -256,7 +256,8 @@ app.post('/api/asks/:id/answer', auth, async (req: any, res) => {
 
 app.get('/api/journals', auth, async (req: any, res) => {
   try {
-    const journals = await SocialService.getJournals(req.user.id, req.query.type as any);
+    const isSeries = req.query.isSeries === 'true';
+    const journals = await SocialService.getJournals(req.user.id, req.query.type as any, isSeries);
     res.json(journals);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });

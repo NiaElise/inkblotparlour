@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchJournals, createJournal, lookupDictionary, fetchStoryChapters } from '../../api';
+import StorySeriesManager from '../StorySeriesManager';
 
 export default function SanctuaryJournal() {
   const [journals, setJournals] = useState([]);
@@ -20,8 +21,13 @@ export default function SanctuaryJournal() {
   const [definition, setDefinition] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
 
+  const [series, setSeries] = useState([]);
+
   useEffect(() => {
     loadJournals();
+    if (activeType === 'story') {
+      fetchSeries().then(setSeries).catch(console.error);
+    }
   }, [activeType]);
 
   const loadJournals = async () => {
@@ -130,12 +136,16 @@ export default function SanctuaryJournal() {
                 
                 {type === 'story' && (
                   <>
-                    <input 
+                    <select 
                       value={parentId}
                       onChange={e => setParentId(e.target.value)}
-                      placeholder="Series ID (optional)"
-                      className="bg-ink-well/40 border border-parchment/10 rounded-sm px-2 py-1 text-[10px] text-parchment/60 outline-none"
-                    />
+                      className="bg-ink-well/40 border border-parchment/10 rounded-sm px-2 py-1 text-[10px] text-parchment/60 outline-none max-w-[150px]"
+                    >
+                      <option value="">Select Series...</option>
+                      {series.map(s => (
+                        <option key={s.id} value={s.id}>{s.title}</option>
+                      ))}
+                    </select>
                     <input 
                       type="number"
                       value={chapterNumber}
@@ -217,21 +227,18 @@ export default function SanctuaryJournal() {
             </div>
           </div>
         </motion.div>
-      ) : (
+      ) : activeType === 'standalone' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {journals.map((j) => (
             <div key={j.id} className="p-6 border border-parchment/10 bg-ink-warm/10 hover:border-sepia/30 transition-all group">
               <div className="flex justify-between items-start mb-4">
                 <div className="w-8 h-8 bg-ink-well border border-parchment/5 flex items-center justify-center text-parchment/20 text-xs">
-                  {j.type === 'story' ? '章' : '✒'}
+                  ✒
                 </div>
                 <span className="text-[8px] text-parchment/20 uppercase tracking-widest">{new Date(j.created_at).toLocaleDateString()}</span>
               </div>
               <h3 className="font-serif text-parchment/80 group-hover:text-sepia transition-colors mb-2">{j.title}</h3>
-              {j.type === 'story' && (
-                <div className="text-[9px] text-sepia/40 uppercase tracking-widest mb-3">Chapter {j.chapter_number}</div>
-              )}
-              <p className="text-[12px] text-parchment/40 line-clamp-4 leading-relaxed italic italic">
+              <p className="text-[12px] text-parchment/40 line-clamp-4 leading-relaxed italic">
                 {j.content}
               </p>
             </div>
@@ -244,6 +251,8 @@ export default function SanctuaryJournal() {
             </div>
           )}
         </div>
+      ) : (
+        <StorySeriesManager />
       )}
     </div>
   );
